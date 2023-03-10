@@ -2,27 +2,27 @@
   A table containing all options available for installation.
 ]]
 local options =  {
-  signal = {
+  {
     name = "Signal",
     url = "https://raw.githubusercontent.com/GeeorgeUK/CCSignalNetwork/main/signal.lua",
   },
-  switch = {
+  {
     name = "Switch",
     url = ""
   },
-  timetable = {
+  {
     name = "Timetable",
     url = ""
   },
-  sensor = {
+  {
     name = "Sensor",
     url = ""
   },
-  server = {
+  {
     name = "Server",
     url = ""
   },
-  cancel = {
+  {
     name = "Cancel",
     url = ""
   }
