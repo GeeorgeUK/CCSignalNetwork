@@ -41,6 +41,7 @@ function Select_Menu(items)
     -- Set our initial colours and clear the display
     term.setTextColor(colours.white)
     term.setBackgroundColor(colours.black)
+    term.setCursorPos(1,1)
     term.clear()
     -- Iterate through each item in the list, highlighting the selection
     for index, item in ipairs(items) do
