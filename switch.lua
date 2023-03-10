@@ -56,7 +56,8 @@ Switch = {
 
 -- Applies the state of the switch.
 function SetState(switch)
-  redstone.setAnalogOutput(switch)
+  redstone.setAnalogOutput("top", switch)
+  redstone.setAnalogOutput("left", switch)
   local state_file = fs.open("state", "w")
   state_file.write(tostring(switch))
   state_file.close()
@@ -66,8 +67,9 @@ end
 
 -- Grabs the update from the URL. Designed as a fallback, just in case.
 function FetchUpdate(url)
-local url_handler = http.get(url)
-return url_handler.readAll()
+  local randomid = tostring(math.random(1,16384))
+  local url_handler = http.get(url.."?cache="..randomid)
+  return url_handler.readAll()
 end
 
 function SaveWithBackup(data, filename)

@@ -58,7 +58,8 @@ Signal = {
 
 -- Applies the state of the signal
 function SetState(signal)
-  redstone.setAnalogOutput(signal)
+  redstone.setAnalogOutput("top", signal)
+  redstone.setAnalogOutput("left", signal)
   local state_file = fs.open("state", "w")
   state_file.write(tostring(signal))
   state_file.close()
@@ -68,7 +69,8 @@ end
 
 -- Grabs the update from the URL. Designed as a fallback, just in case.
 function FetchUpdate(url)
-  local url_handler = http.get(url)
+  local randomid = tostring(math.random(1,16384))
+  local url_handler = http.get(url.."?cache="..randomid)
   return url_handler.readAll()
 end
 
