@@ -35,8 +35,8 @@ local options =  {
   Other fields can be provided as part of the menu, and will be returned
   in the result.
 ]]
-function Select_Menu(items, sel)
-  if not sel then sel = 1 end
+function Select_Menu(items)
+  sel = 1
   while true do
     -- Set our initial colours and clear the display
     term.setTextColor(colours.white)
