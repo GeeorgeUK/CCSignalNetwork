@@ -1,3 +1,6 @@
+--[[
+  A table containing all options available for installation.
+]]
 local options = {
   signal = {
     name = "Signal Controller",
@@ -13,6 +16,10 @@ local options = {
   },
   sensor = {
     name = "Sensor Monitor",
+    url = ""
+  },
+  server = {
+    name = "Server",
     url = ""
   },
   cancel = {
