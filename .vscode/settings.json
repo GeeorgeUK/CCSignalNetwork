@@ -1,0 +1,9 @@
+{
+    "Lua.diagnostics.globals": [
+        "colours",
+        "term",
+        "keys",
+        "http",
+        "fs"
+    ]
+}
