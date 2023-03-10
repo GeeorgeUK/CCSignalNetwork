@@ -74,7 +74,7 @@ function Select_Menu(items)
         elseif v1 == keys.pageDown then
           sel = #items
         -- Use number keys to select an index between 1 and 10, or num items
-        elseif 1 < v1 < 10 then
+        elseif 1 <= v1 and v1 <= 10 then
           if sel <= #items then
             -- We already have this item selected, so return it
             if sel == v1 then
