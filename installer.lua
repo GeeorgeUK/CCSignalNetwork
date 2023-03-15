@@ -104,7 +104,9 @@ function FetchUpdate(url)
 end
 
 function SaveWithBackup(data, filename)
-  if not filename then filename = "startup" end
+  if filename == nil then 
+    filename = "startup" 
+  end
   if fs.exists(filename) then
     if not fs.isDir("old") then
       fs.makeDir("old")
@@ -119,6 +121,7 @@ function SaveWithBackup(data, filename)
   file_handler.close()
 end
 
+print(len(options))
 local result = Select_Menu(options)
 if result.name == "Cancel" then
   os.pullEvent("disk_eject")

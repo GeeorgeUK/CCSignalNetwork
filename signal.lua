@@ -93,6 +93,7 @@ end
 -- We set the default signal to Yellow: Proceed with caution.
 SetState(State)
 
+print("Welcome to Skyline - SIGNAL #"..MyChannel)
 while true do
   local event, v1, v2, v3, v4, v5 = os.pullEvent()
   if event == "modem_message" then
@@ -106,9 +107,11 @@ while true do
           SaveWithBackup(v4.data, "startup")
         end
         os.reboot()
-      if v4.your_type == "signal" then
-        -- Makes sure we've set the correct state
-        SetState(v4.state)
+      elseif v4.instruct == "get" then
+        if v4.my_type == "signal" then
+          -- Makes sure we've set the correct state
+          SetState(v4.state)
+        end
       end
     end
   end
