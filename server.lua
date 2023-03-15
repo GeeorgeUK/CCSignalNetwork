@@ -341,6 +341,8 @@ end
 
 
 -- Runtime environment
+term.clear()
+term.setCursorPos(1,1)
 log("Started Skyline server on port "..GlobChannel)
 Monitor = peripheral.find("monitor")
 
