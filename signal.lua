@@ -4,10 +4,13 @@ GlobChannel = 8190
 MyChannel = os.getComputerID() + 8192
 -- A global modem handler.
 Modem = peripheral.find("modem")
--- The current version of this signal.
+Modem.open(MyChannel)
+-- The current network version.
 Version = {1,0}
 -- A log of messages
 Log = {}
+-- Default state of this machine (Red Signal)
+DefaultState = 1
 
 local function log(message)
   Log[#Log+1] = message
@@ -29,7 +32,7 @@ end
 -- If we do not have a saved state, create a new default one.
 if not fs.exists("state") then
   local state_file = fs.open("state", "w")
-  state_file.write(7)
+  state_file.write(1)
   state_file.close()
 end
 
@@ -99,6 +102,7 @@ function FetchUpdate(url)
   return url_handler.readAll()
 end
 
+
 function SaveWithBackup(data, filename)
   if not filename then filename = "startup" end
   if fs.exists(filename) then
@@ -117,7 +121,7 @@ function SaveWithBackup(data, filename)
   fs.move(".temp", filename)
 end
 
--- We set the default signal to Yellow: Proceed with caution.
+-- We set the default signal to Red.
 SetState(State)
 
 
@@ -144,3 +148,4 @@ while true do
     end
   end
 end
+

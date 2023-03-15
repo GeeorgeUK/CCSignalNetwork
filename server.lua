@@ -2,31 +2,54 @@
 GlobChannel = 8190
 -- A global modem handler.
 Modem = peripheral.find("modem")
--- The current version of this server.
+Modem.open(GlobChannel)
+-- The current network version.
 Version = {1,0}
 -- A log of messages.
 Log = {}
 -- All data about the network.
-Network = {
-  Signals = {},
-  Switches = {}
-}
+Network = {}
+-- Our route history
+RouteHistory = {}
 
 
--- Add a message to the log.
 local function log(message)
+  --[[ 
+    Add a message to the log database.
+  ]]
   Log[#Log+1] = message
 end
 
 
--- Displays the log on the screen, inside the terminal 'here'.
 local function show_log(here)
+
+  --[[
+    Displays the log data on the screen.
+  ]]
+  
+  -- Set the cursor position to the top corner.
   local xSize, ySize = here.getSize()
   here.setCursorPos(1,1)
+  
+  -- If we have a big logfile, we set our offset.
   offset = #Log - ySize
+
+  -- Iterate over each log file.
   for index, item in ipairs(Log) do
+
+    -- Shorten long log entries for display.
+    if #item > xSize then
+      item = string.sub(item, 1, xSize-4)
+      item = item.."..."
+    end
+
+    -- Set our index location for log entry writing.
     here.setCursorPos(1, index)
+
+    -- Remove any existing characters from this line, then write.
     here.clearLine()
+
+    -- Finally, write the entries we need to write.
     if #Log <= ySize then
       here.write(item)
     else
@@ -44,14 +67,18 @@ local function split(unprocessed, separator)
 
   -- This will be our output.
   local processed = {}
+
   -- If we have no separator, we should use a space character.
   local seperator = separator or " "
+
   -- This is the pattern of characters we will use to split the string.
   local pattern = string.format("([^%s]+)", separator)
+
   -- Process the unprocessed data using the pattern
   string.gsub(unprocessed, pattern, function(this_item) 
     processed[#processed + 1] = this_item 
   end)
+
   -- Return our processed result. We are done!
   return processed
 end
@@ -71,6 +98,7 @@ local function contains(container, something)
         return true
       end
     end
+
   elseif type(container) == "string" then
     -- If we are checking a string for a substring, Lua has an inbuilt method for this.
     -- (Why aren't you using string.match in the first instance?)
@@ -118,7 +146,7 @@ local function load_csv(file)
 end
 
 
-local function save_csv(headers, data, file)
+local function save_csv(headers, entries, file)
   --[[
     A function to convert the data in the headers and data tables into a CSV.
     Used by the Skyline server to store its data.
@@ -131,7 +159,7 @@ local function save_csv(headers, data, file)
   handler.writeLine(headers_line)
   
   -- Iterate through the rest of the lines and insert them
-  for index, entry in ipairs(data) do
+  for index, entry in ipairs(entries) do
     local this_line = table.concat(entry, ",")
     handler.writeLine(this_line)
   end
@@ -184,7 +212,8 @@ function ParseRoute(file)
     The parseroute iterates over each item in the route:
     - Runs SaveState on each item to save locally
   ]]
-  if fs.exists(file) then
+  if fs.exists("routes/"..file) then
+    RouteHistory[#RouteHistory+1] = file
     local csv_data = {load_csv(file)}
     for index, item in ipairs(csv_data.entries) do
       SaveState(item[2], item[3], item[4])
@@ -202,9 +231,9 @@ end
 
 if not fs.isDir("routes") then
   fs.makeDir("routes")
-end
-if not fs.isDir("routes/autorun") then
-  fs.makeDir("routes/autorun")
+  if not fs.exists("routes/default.csv") then
+    local routes_file = fs.open("routes/default.csv", "w")
+    routes_file.writeLine("index,address,type,state")
 end
 
 
@@ -241,10 +270,12 @@ end
 function set_all_states(of_type, new_state)
   --[[
     Iterates through all Network entries of this type and sets them to the new state
+    Will also send the state to the device in question.
   ]]
   for index, item in ipairs(Network.entries) do
     if item[3] == of_type then
       Network.entries[index][4] = new_state
+      SendState(item[2], of_type, new_state)
     end
   end
 end
@@ -305,13 +336,13 @@ end
 
 -- Runtime environment
 log("Started Skyline server on port "..GlobChannel)
-monitor = peripheral.find("monitor")
+Monitor = peripheral.find("monitor")
 
 
 while true do
   -- First, show the updated log on the monitor.
-  if monitor ~= nil then
-    show_log(monitor)
+  if Monitor ~= nil then
+    show_log(Monitor)
   end
 
   -- Then, show the log on the computer itself.
@@ -372,13 +403,22 @@ while true do
         -- This returns a list of all routes
 
         -- 1. Get a list of all files in /routes/ and /routes/autorun
+        local files = fs.list("routes")
+        
         -- 2. Send a state to the client with a list of all routes
+        Modem.transmit(address, GlobChannel, {
+          instruct="all_routes",
+          data = files
+        })
       
       elseif payload.instruct == "active" then
         -- This returns a list of all active routes since the last reset.
 
-        -- 1. Get a list of all routes in the active routes table
-        -- 2. Send a state to the client with a list of all active routes
+        -- 1. Send our ActiveRoutes table
+        Modem.transmit(address, GlobChannel, {
+          instruct="active_routes",
+          data = RouteHistory
+        })
       
       elseif payload.instruct == "route" then
         -- This means a client is executing a route.
@@ -430,8 +470,16 @@ while true do
       elseif payload.instruct == "reset" then
         -- The client has reset to the default.
 
-        -- 1. Reset all signals and switches to off
-        -- 2. Process the route default.csv
+        -- 1. Set all signals to red
+        set_all_states("signal", 1)
+        -- 2. Set all switches to off
+        set_all_states("switch", 0)
+        -- 3. Save the Network data to file
+        save_csv(Network.headers, Network.entries, "database.csv")
+        -- 4. Reset the RouteHistory table
+        RouteHistory = {}
+        -- 5. Process the route default.csv
+        ParseRoute("routes/default.csv")
 
       end
     end
