@@ -12,67 +12,89 @@ Log = {}
 -- Default state of this machine (Red Signal)
 DefaultState = 1
 
+
 local function log(message)
+  --[[
+    Add a message to the log table.
+  ]]
   Log[#Log+1] = message
 end
 
+
 local function show_log(here)
+
+  --[[
+    Displays the log data on the screen.
+  ]]
+
+  -- set the cursor position to the top corner.
   local xSize, ySize = here.getSize()
   here.setCursorPos(1,1)
+
+  -- If we have a big logfile, we set an offset.
   offset = #Log - ySize
+
+  -- Iterate over each log file.
   for index, item in ipairs(Log) do
+
+    -- Shorten long log entries for display.
+    if #item > xSize then
+      item = string.sub(item, 1, xSize-4)
+      item = item.."..."
+    end
+
+    -- Set our index location for log entry writing
     here.setCursorPos(1, index)
+
+    -- Remove any existing characters from this line, then write.
     here.clearLine()
     if #Log <= ySize then
       here.write(item)
+    else
+      here.write(Log[offset+index])
     end
   end
 end
 
+
 -- If we do not have a saved state, create a new default one.
 if not fs.exists("state") then
   local state_file = fs.open("state", "w")
-  state_file.write(1)
+  state_file.write(DefaultState)
   state_file.close()
 end
 
+
+-- Load any saved state, whatever it may be.
 local state_file = fs.open("state", "r")
 State = tonumber(state_file.readAll())
 state_file.close()
 
-function GetState()
-  --[[
-    Request from the server what we should be doing right now
-    {
-      your_type="signal",
-      instruct=set,
-      state=integer
-    }
-  ]]
-  Modem.transmit(GlobChannel, MyChannel, {
-    my_type="signal",
-    instruct="get",
-    version=Version
-  })
-end
 
-function PutState()
+function PingState()
+
   --[[
     We use this to tell the server what we are doing right now.
+    The server will then respond with updated instructions if that is incorrect.
   ]]
+
   Modem.transmit(GlobChannel, MyChannel, {
     my_type="signal",
-    instruct="put",
+    instruct="ping",
     state=State,
     version=Version
   })
+
 end
 
---[[
-  Not necessary to function, but this is an important reference to
-  what each state values mean.
-]]
+
 Signal = {
+  
+  --[[
+    Not necessary to function, but this is an important reference to
+    what each state values mean.
+  ]]
+
   off=0,
   red=1,
   yellow=7,
@@ -81,29 +103,63 @@ Signal = {
   1="red",
   7="yellow",
   15="green"
+
 }
 
--- Applies the state of the signal
-function SetState(signal)
-  redstone.setAnalogOutput("top", signal)
-  redstone.setAnalogOutput("left", signal)
-  local state_file = fs.open("state", "w")
-  state_file.write(tostring(signal))
+
+function SaveState()
+
+  --[[
+    Saves the state to file.
+  ]]
+
+  local state_file = fs.open("state")
+  state_file.write(State)
   state_file.close()
-  State = signal
-  PutState()
+
 end
 
 
--- Grabs the update from the URL. Designed as a fallback, just in case.
+function ApplyState()
+
+  --[[
+    Applies the state to the analogue redstone output.
+  ]]
+
+  redstone.setAnalogOutput("top", State)
+  redstone.setAnalogOutput("left", State)
+
+end
+
+
+function UpdateState()
+
+  --[[
+    Applies the state, then saves the state.
+  ]]
+
+  ApplyState()
+  SaveState()
+
+end
+
+
+
 function FetchUpdate(url)
+
+  --[[
+    Grabs the update from the URL. Designed as a fallback, just in case.
+  ]]
+
   local randomid = tostring(math.random(1,16384))
   local url_handler = http.get(url)
   return url_handler.readAll()
+
 end
 
 
 function SaveWithBackup(data, filename)
+  -- Installs the update.
   if not filename then filename = "startup" end
   if fs.exists(filename) then
     if not fs.isDir("old") then
@@ -121,31 +177,33 @@ function SaveWithBackup(data, filename)
   fs.move(".temp", filename)
 end
 
--- We set the default signal to Red.
-SetState(State)
+
+-- Either applies the saved state, or applies the default state.
+ApplyState(State)
 
 
+log("Started Skyline signal on channel "..MyChannel)
 log("Setting initial state to "..Signal[State])
 while true do
-  local event, v1, v2, v3, v4, v5 = os.pullEvent()
-  if event == "modem_message" then
-    if type(v4) == "table" then
+  show_log(term.native())
+  local event = {os.pullEvent()}
+  if event[1] == "modem_message" then
+    if type(event[5]) == "table" then
+
       if v4.instruct == "update" then
-        if type(v4.data) == "string" then
-          -- If it's a string, we treat it like a URL
-          local data = FetchUpdate(v4.data)
-          SaveWithBackup(data, "startup")
-        elseif type(v4.data) == "table" then
-          SaveWithBackup(v4.data, "startup")
+        if v4.your_type == "signal" then
+          -- Here we handle update files.
+          SaveWithBackup(v4.data, "startup.lua")
+          os.reboot()
         end
-        os.reboot()
-      elseif v4.instruct == "get" then
-        if v4.my_type == "signal" then
-          -- Makes sure we've set the correct state
-          SetState(v4.state)
+      elseif v4.instruct == "set" then
+        if v4.your_type == "signal" then
+          -- Here we handle signals.
+          State = v4.state
+          UpdateState()
         end
       end
+      
     end
   end
 end
-

@@ -359,7 +359,7 @@ while true do
   end
 
   -- Then, show the log on the computer itself.
-  show_log(term)
+  show_log(term.native())
 
   -- Wait here until we receive a modem message event
   local e = {os.pullEvent()}
@@ -446,13 +446,15 @@ while true do
           ParseRoute("routes/"..this_route)
           Modem.transmit(address, GlobChannel, {
             instruct="success",
-            state="ok"
+            callback="route",
+            state=this_route
           })
         else
           -- 3. Send a state to the client depending on success
           Modem.transmit(address, GlobChannel, {
-            instruct="failure",
-            state="not_exist"
+            instruct="failed",
+            callback="route",
+            state=this_route
           })
         end
         -- 4. Add the route name to the active routes table
@@ -465,8 +467,9 @@ while true do
         -- 1. Check the route name does not exist already
         if fs.exists("routes/"..route_name..".csv") then
           Modem.transmit(address, GlobChannel, {
-            instruct="failure",
-            state="exist"
+            instruct="failed",
+            callback="add_route",
+            state=route_name
           })
         else
           -- 2. Save the route file if we can
@@ -476,7 +479,8 @@ while true do
           -- 3. Send a state to the client depending on success
           Modem.transmit(address, GlobChannel, {
             instruct="success",
-            state="ok"
+            callback="add_route",
+            state=route_name
           })
         end
       
@@ -493,6 +497,10 @@ while true do
         RouteHistory = {}
         -- 5. Process the route default.csv
         ParseRoute("routes/default.csv")
+        Modem.transmit(address, GlobChannel, {
+          instruct="success",
+          callback="reset"
+        })
 
       end
     end
