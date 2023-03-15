@@ -234,6 +234,8 @@ if not fs.isDir("routes") then
   if not fs.exists("routes/default.csv") then
     local routes_file = fs.open("routes/default.csv", "w")
     routes_file.writeLine("index,address,type,state")
+    routes_file.close()
+  end
 end
 
 
