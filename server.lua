@@ -238,6 +238,10 @@ if not fs.isDir("routes") then
   end
 end
 
+if not fs.isDir("updates") then
+  fs.makeDir("updates")
+end
+
 
 -- Create the network table from the database file.
 Network = {load_csv("database.csv")}
