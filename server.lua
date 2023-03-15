@@ -345,6 +345,11 @@ term.clear()
 term.setCursorPos(1,1)
 log("Started Skyline server on port "..GlobChannel)
 Monitor = peripheral.find("monitor")
+if Monitor ~= nil then
+  Monitor.clear()
+  Monitor.setCursorPos(1,1)
+  Monitor.setTextScale(0.5)
+end
 
 
 while true do
