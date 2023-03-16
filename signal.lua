@@ -190,27 +190,30 @@ while true do
       payload = event[5]
 
       if payload.instruct == "update" then
+
         if payload.your_type == "signal" then
           -- Here we handle update files.
           SaveWithBackup(payload.data, "startup.lua")
           os.reboot()
         end
+
       elseif payload.instruct == "set" then
+
         if payload.your_type == "signal" then
           -- Here we handle signals.
           State = payload.state
           UpdateState()
         end
-      end
 
-      -- Automatically update if our version does not match
-      if payload.version ~= Version then
-        Modem.transmit(GlobChannel, MyChannel, {
-          my_type = "signal",
-          instruct = "update"
-        })
-      end
+        -- Automatically update if our version does not match
+        if payload.version ~= Version then
+          Modem.transmit(GlobChannel, MyChannel, {
+            my_type = "signal",
+            instruct = "update"
+          })
+        end
 
+      end
     end
   end
 end

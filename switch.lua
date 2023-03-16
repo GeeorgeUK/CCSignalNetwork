@@ -198,16 +198,16 @@ while true do
           State = payload.state
           UpdateState()
         end
-      end
-
-      -- Automatically update if our version does not match
-      if payload.version ~= Version then
-        Modem.transmit(GlobChannel, MyChannel, {
-          my_type = "switch",
-          instruct = "update"
-        })
-      end
+        
+        -- Automatically update if our version does not match
+        if payload.version ~= Version then
+          Modem.transmit(GlobChannel, MyChannel, {
+            my_type = "switch",
+            instruct = "update"
+          })
+        end
       
+      end
     end
   end
 end
