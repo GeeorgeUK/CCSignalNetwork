@@ -400,7 +400,7 @@ while true do
 
         -- 2. To save on bandwidth, only send the change if it's different
         -- (We should send if the version is different to trigger an update)
-        if payload.state == their_state and payload.version == Version then
+        if payload.state == their_state and payload.version[2] == Version[2] then
           log("Info: "..their_type.."@"..address..": state is "..their_state.." as expected")
         else
           SendState(address, their_type, their_state)
