@@ -117,6 +117,7 @@ function ApplyState()
 
   redstone.setAnalogOutput("top", State)
   redstone.setAnalogOutput("left", State)
+  log("Setting state to "..Signal[State])
 
 end
 
@@ -173,13 +174,21 @@ PingState()
 
 
 log("Started Skyline "..table.concat(Version, ".").." signal on channel "..MyChannel)
-log("Setting initial state to "..Signal[State])
 while true do
+
+  -- Display the log
   show_log(term.native())
+  
+  -- Wait to continue
   local event = {os.pullEvent()}
+
+  -- Received a message from the 
   if event[1] == "modem_message" then
     if type(event[5]) == "table" then
+
+      -- Our payload
       payload = event[5]
+
       if payload.instruct == "update" then
         if payload.your_type == "signal" then
           -- Here we handle update files.
@@ -193,7 +202,15 @@ while true do
           UpdateState()
         end
       end
-      
+
+      -- Automatically update if our version does not match
+      if payload.version ~= Version then
+        Modem.transmit(GlobChannel, MyChannel, {
+          payload.my_type = "signal",
+          payload.instruct = "update"
+        })
+      end
+
     end
   end
 end
