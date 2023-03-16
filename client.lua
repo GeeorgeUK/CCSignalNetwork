@@ -135,7 +135,7 @@ local function split(unprocessed, separator)
   unprocessed = unprocessed..separator
 
   -- Match each instance in the string with a separator at the end, removing the separator
-  for item in str.gmatch("(.-)"..separator) do
+  for item in string.gmatch(unprocessed, "(.-)"..separator) do
 
     -- Add each result to the table
     table.insert(result, item)

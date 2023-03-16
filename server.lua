@@ -64,11 +64,14 @@ local function split(unprocessed, separator)
   -- Store the result here
   local result = {}
 
+  -- Make sure we have a separator
+  separator = separator or " "
+
   -- Add the separator to the end of the file
   unprocessed = unprocessed..separator
 
   -- Match each instance in the string with a separator at the end, removing the separator
-  for item in str.gmatch("(.-)"..separator) do
+  for item in string.gmatch(unprocessed, "(.-)"..separator) do
 
     -- Add each result to the table
     result[#result+1] = item
