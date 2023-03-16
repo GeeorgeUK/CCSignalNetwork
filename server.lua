@@ -253,6 +253,7 @@ function add_device(address, this_type, state)
   table.append(Network.entries, {
     #Network.entries+1, address, this_type, state
   })
+  return #Network.entries, {#Network.entries, address, this_type, state}
 end
 
 
@@ -262,10 +263,10 @@ function get_device(address)
   ]]
   for index, item in ipairs(Network.entries) do
     if item[2] == address then
-      return index, item
+      return item
     end
   end
-  return nil, nil
+  return nil
 end
 
 
@@ -389,9 +390,9 @@ while true do
         -- This means a device is available, we should send their state.
 
         -- 1. Get the device details by its address
-        local _, item = get_device(address)
+        local item = get_device(address)
         if item == nil then
-          add_device(address, payload.my_type, payload.state)
+          item = add_device(address, payload.my_type, payload.state)
         end
         local their_type = item[3]
         local their_state = item[4]
