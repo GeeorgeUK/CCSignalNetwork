@@ -74,7 +74,7 @@ local function split(unprocessed, separator)
   for item in string.gmatch(unprocessed, "(.-)"..separator) do
 
     -- Add each result to the table
-    result[#result+1] = item
+    table.insert(result, item)
   end
 
   -- Finally, return the result
@@ -134,6 +134,7 @@ local function load_csv(file)
   local next_line = handler.readLine()
   while next_line do
     entries[#entries+1] = split(next_line, ",")
+    next_line = handler.readLine()
   end
 
   -- Close the handler as we are done with it.
