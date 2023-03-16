@@ -187,7 +187,7 @@ function Command.help.run(args)
     Function for the /help command.
     This displays a list of available commands.
   ]]
-  if args == nil then
+  if #args == 0 or args == nil then
     log("There are #"..#Commands.." commands:")
     for index, command in ipairs(Commands) do
       log(Command[command].usage)
@@ -214,7 +214,7 @@ function Command.route.run(args)
     Function for the /route command.
     This executes a routefile on the server.
   ]]
-  if args == nil then
+  if #args == 0 then
     log("Usage: "..Command.route.usage)
   else
     Modem.transmit(GlobChannel, MyChannel, {
@@ -234,7 +234,7 @@ function Command.addroute.run(args)
     Function for the /addroute command.
     This creates a route file, then sends it to the server.
   ]]
-  if args == nil or #args < 2 then
+  if #args < 2 then
     log("Usage: "..Command.addroute.usage)
   else
     route_name = args[1]
@@ -247,6 +247,7 @@ function Command.addroute.run(args)
       data=route_data
     })
     route_file.close()
+    log("Creating new route '"..route_name.."'")
   end
 end
 
@@ -262,6 +263,7 @@ function Command.reset.run(args)
   Modem.transmit(GlobChannel, MyChannel, {
     instruct="reset"
   })
+  log("Sending reset request")
 end
 
 Command.active = {}
@@ -276,6 +278,7 @@ function Command.active.run(args)
   Modem.transmit(GlobChannel, MyChannel, {
     instruct="active"
   })
+  log("Requesting active routes")
 end
 
 Command.routes = {}
@@ -290,6 +293,7 @@ function Command.routes.run(args)
   Modem.transmit(GlobChannel, MyChannel, {
     instruct="routes"
   })
+  log("Requesting all routes")
 end
 
 Command.update = {}
@@ -305,6 +309,7 @@ function Command.update.run(args)
     instruct="update",
     my_type="client"
   })
+  log("Requesting client update")
 end
 
 
