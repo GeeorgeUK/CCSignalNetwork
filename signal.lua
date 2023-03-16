@@ -57,6 +57,13 @@ local function show_log(here)
 end
 
 
+Signal = {}
+Signal["0"] = "off"
+Signal["1"] = "red"
+Signal["7"] = "yellow"
+Signal["15"] = "green"
+
+
 -- If we do not have a saved state, create a new default one.
 if not fs.exists("state") then
   local state_file = fs.open("state", "w")
@@ -164,7 +171,7 @@ ApplyState(State)
 
 
 log("Started Skyline signal on channel "..MyChannel)
-log("Setting initial state to "..Signal[State])
+log("Setting initial state to "..Signal[tostring(State)])
 while true do
   show_log(term.native())
   local event = {os.pullEvent()}

@@ -57,6 +57,11 @@ local function show_log(here)
 end
 
 
+Switch = {}
+Switch["0"] = "off"
+Switch["15"] = "on"
+
+
 -- If we do not have a saved state, create a new default one.
 if not fs.exists("state") then
   local state_file = fs.open("state", "w")
@@ -163,7 +168,7 @@ ApplyState(State)
 
 
 log("Started Skyline switch on channel "..MyChannel)
-log("Setting initial state to "..Signal[State])
+log("Setting initial state to "..Switch[State])
 while true do
   show_log(term.native())
   local event = {os.pullEvent()}
