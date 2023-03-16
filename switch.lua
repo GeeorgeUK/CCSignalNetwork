@@ -88,13 +88,12 @@ function PingState()
 end
 
 
-Switch = {
-  
-  --[[
-    Not necessary to function, but this is an important reference to
-    what each state values mean.
-  ]]
+--[[
+  Not necessary to function, but this is an important reference to
+  what each state values mean.
+]]
 
+Switch = {
   off=0,
   on=15,
   0="off",
