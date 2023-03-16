@@ -172,7 +172,7 @@ ApplyState()
 PingState()
 
 
-log("Started Skyline signal on channel "..MyChannel)
+log("Started Skyline "..table.concat(Version, ".")" signal on channel "..MyChannel)
 log("Setting initial state to "..Signal[State])
 while true do
   show_log(term.native())

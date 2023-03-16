@@ -331,7 +331,7 @@ function Command.clear.run(args)
   end
 end
 
-log("Started client on channel "..MyChannel)
+log("Started Skyline "..table.concat(Version, ".").." client on channel "..MyChannel)
 while true do
   -- Update the log display and the input display
   show_log(LogDisplay)
