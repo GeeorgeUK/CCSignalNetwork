@@ -223,7 +223,7 @@ end
 -- Create the network database if it does not exist.
 if not fs.exists("database.csv") then
   local db_handler = fs.open("database.csv", "w")
-  db_handler.write("index,address,type,state,name")
+  db_handler.write("index,address,type,state")
   db_handler.close()
 end
 
@@ -242,7 +242,18 @@ end
 
 
 -- Create the network table from the database file.
-Network = {load_csv("database.csv")}
+Network = {}
+Network.headers, Network.entries = load_csv("database.csv")
+
+
+function add_device(address, this_type, state)
+  --[[
+    Adds the device to the database
+  ]]
+  table.append(Network.entries, {
+    #Network.entries+1, address, this_type, state
+  })
+end
 
 
 function get_device(address)
@@ -254,7 +265,7 @@ function get_device(address)
       return index, item
     end
   end
-  return 0, nil
+  return nil, nil
 end
 
 
