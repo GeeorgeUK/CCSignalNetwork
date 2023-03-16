@@ -409,7 +409,7 @@ while true do
           payload.version[3] == Version[3]
           and payload.version[2] == Version[2]
           and payload.version[1] == Version[1]
-        )
+        ) then
           log("Info: "..their_type.."@"..address..": state is "..their_state.." as expected")
         else
           SendState(address, their_type, their_state)
