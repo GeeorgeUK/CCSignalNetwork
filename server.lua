@@ -4,7 +4,7 @@ GlobChannel = 8190
 Modem = peripheral.find("modem")
 Modem.open(GlobChannel)
 -- The current network version.
-Version = {1,0,14}
+Version = {1,0,15}
 -- A log of messages.
 Log = {}
 -- All data about the network.
@@ -467,7 +467,7 @@ while true do
         -- 1. Send our ActiveRoutes table
         Modem.transmit(address, GlobChannel, {
           instruct="active_routes",
-          data = RouteHistory or {}
+          data = ActiveRoutes
         })
       
       elseif payload.instruct == "route" then
