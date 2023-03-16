@@ -6,7 +6,7 @@ MyChannel = os.getComputerID() + 8192
 Modem = peripheral.find("modem")
 Modem.open(MyChannel)
 -- The current network version.
-Version = {1,0,6}
+Version = {1,0,7}
 -- A log of messages
 Log = {}
 -- Default state of this machine (Red Signal)
@@ -206,8 +206,8 @@ while true do
       -- Automatically update if our version does not match
       if payload.version ~= Version then
         Modem.transmit(GlobChannel, MyChannel, {
-          payload.my_type = "signal",
-          payload.instruct = "update"
+          my_type = "signal",
+          instruct = "update"
         })
       end
 
