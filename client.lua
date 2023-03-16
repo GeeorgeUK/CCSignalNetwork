@@ -192,14 +192,12 @@ function Command.help.run(args)
   if #args == 0 or args == nil then
     log("There are #"..#Commands.." commands:")
     for index, command in ipairs(Commands) do
-      log(Command[command].usage)
-      log("  "..Command[command].desc)
+      log(Command[command].usage..": "..Command[command].desc)
     end
   else
     if contains(Commands, args[1]) then
       log("Showing help for "..args[1]..":")
       log("Usage: "..Command[args[1]].usage)
-      log("Desc: "..Command[args[1]].desc)
       log(Command[args[1]].help)
     else
       log("Unknown command: '"..args[1].."'")
@@ -228,7 +226,7 @@ function Command.route.run(args)
 end
 
 Command.addroute = {}
-Command.addroute.usage = "addroute <route_name> <route_path>"
+Command.addroute.usage = "addroute <name> <path>"
 Command.addroute.desc = "Create a route."
 Command.addroute.help = "Create a new route CSV file, and send it to the server."
 function Command.addroute.run(args)
