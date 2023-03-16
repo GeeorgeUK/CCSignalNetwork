@@ -194,7 +194,7 @@ while true do
         end
       elseif payload.instruct == "set" then
         if payload.your_type == "switch" then
-          -- Here we handle signals.
+          -- Here we handle switches.
           State = payload.state
           UpdateState()
         end
@@ -206,7 +206,7 @@ while true do
           payload.version[1] > Version[1] 
         ) then
           Modem.transmit(GlobChannel, MyChannel, {
-            my_type = "signal",
+            my_type = "switch",
             instruct = "update"
           })
         end
