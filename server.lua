@@ -4,7 +4,7 @@ GlobChannel = 8190
 Modem = peripheral.find("modem")
 Modem.open(GlobChannel)
 -- The current network version.
-Version = {1,0,19}
+Version = {1,0,20}
 -- A log of messages.
 Log = {}
 -- All data about the network.
@@ -223,6 +223,7 @@ function ParseRoute(file)
     for index, item in ipairs(csv_data.entries) do
       SaveState(item[2], item[3], item[4])
     end
+    save_csv(Network.headers, Network.entries, "database.csv")
   else
     log("Failed to find the route")
   end
@@ -469,6 +470,37 @@ while true do
           instruct="active_routes",
           data = ActiveRoutes
         })
+
+      elseif payload.instruct == "get" or payload.instruct == "set" then
+        -- This means a client wants to get information about a machine.
+        if payload.instruct == "get" then
+          log(payload.my_type.."@"..address.." wants machine information")
+        else
+          log(payload.my_type.."@"..address.." is modifying a machine")
+        end
+
+        -- Grab information about the device
+        local device = get_device()
+        if device == nil then
+          Modem.transmit(address, GlobChannel, {
+            callback="get",
+            state="failed"
+          })
+        else
+          if payload.instruct == "set" then
+            -- Here we make the changes as necessary
+            -- Then we redefine device with the new data
+            set_device_state(address, payload.state)
+            device[4] = payload.state
+            save_csv(Network.headers, Network.entries, "database.csv")
+          end
+          -- Send the information to the client
+          Modem.transmit(address, GlobChannel, {
+            callback="get",
+            state="success",
+            data=device
+          })
+        end
       
       elseif payload.instruct == "route" then
         -- This means a client is executing a route.

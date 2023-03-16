@@ -6,7 +6,7 @@ MyChannel = os.getComputerID() + 8192
 Modem = peripheral.find("modem")
 Modem.open(MyChannel)
 -- The current version of this switch.
-Version = {1,0,19}
+Version = {1,0,20}
 -- A log of messages
 Log = {}
 -- Default state of this machine (Off switch)
@@ -18,6 +18,11 @@ local function log(message)
     Add a message to the log table.
   ]]
   Log[#Log+1] = message
+
+  -- Prune any really old log files to avoid using lots of RAM
+  if #Log >= 100 then
+    table.remove(Log, 1)
+  end
 end
 
 
@@ -47,8 +52,7 @@ local function show_log(here)
     -- Set our index location for log entry writing
     here.setCursorPos(1, index)
 
-    -- Remove any existing characters from this line, then write.
-    here.clearLine()
+    -- Write
     if #Log <= ySize then
       here.write(item)
     else
@@ -146,18 +150,30 @@ end
 
 
 function SaveWithBackup(data, filename)
-  -- Installs the update.
-  if not filename then filename = "startup" end
+  --[[
+    Installs the update as a backup file.
+    Just in case there's an error while installing.
+  ]]
+
+  -- If we dont have a file, we use the default startup name
+  if not filename then
+    filename = "startup.lua"
+  end
+
+  -- If the file exists, we create a backup
   if fs.exists(filename) then
     if not fs.isDir("old") then
       fs.makeDir("old")
     end
-    if fs.exists("old/" .. filename) then
-      fs.delete("old/" .. filename)
+
+    if fs.exists("old/"..filename) then
+      fs.delete("old/"..filename)
     end
-    fs.move(filename, "old/" .. filename)
+
+    fs.move(filename, "old/"..filename)
   end
-  -- Write to a temporary update file, just in case there's a failure.
+
+  -- Create a temporary file of the content, then move it.
   local file_handler = fs.open(".temp", "w")
   file_handler.write(data)
   file_handler.close()

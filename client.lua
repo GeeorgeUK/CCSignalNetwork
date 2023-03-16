@@ -5,7 +5,7 @@ MyChannel = os.getComputerID() + 8192
 -- The global modem handler
 Modem = peripheral.find("modem")
 -- The global version identifier. If it does not match the server, we update
-Version = {1,0,19}
+Version = {1,0,20}
 -- A local log of messages
 Log = {}
 -- A local input cursor and table
@@ -18,6 +18,11 @@ local function log(message)
     Add a message to the log table.
   ]]
   Log[#Log+1] = message
+
+  -- Prune any really old log files to avoid using lots of RAM
+  if #Log >= 100 then
+    table.remove(Log, 1)
+  end
 end
 
 
@@ -47,8 +52,7 @@ local function show_log(here)
     -- Set our index location for log entry writing
     here.setCursorPos(1, index)
 
-    -- Remove any existing characters from this line, then write.
-    here.clearLine()
+    -- Write
     if #Log <= ySize then
       here.write(item)
     else
@@ -84,18 +88,30 @@ end
 
 
 function SaveWithBackup(data, filename)
-  -- Installs the update.
-  if not filename then filename = "startup" end
+  --[[
+    Installs the update as a backup file.
+    Just in case there's an error while installing.
+  ]]
+
+  -- If we dont have a file, we use the default startup name
+  if not filename then
+    filename = "startup.lua"
+  end
+
+  -- If the file exists, we create a backup
   if fs.exists(filename) then
     if not fs.isDir("old") then
       fs.makeDir("old")
     end
-    if fs.exists("old/" .. filename) then
-      fs.delete("old/" .. filename)
+
+    if fs.exists("old/"..filename) then
+      fs.delete("old/"..filename)
     end
-    fs.move(filename, "old/".. filename )
+
+    fs.move(filename, "old/"..filename)
   end
-  -- Write to a temporary update file, just in case there's a failure.
+
+  -- Create a temporary file of the content, then move it.
   local file_handler = fs.open(".temp", "w")
   file_handler.write(data)
   file_handler.close()
@@ -176,7 +192,8 @@ end
 Callbacks = {}
 Commands = {
   "help", "route", "addroute", "reset", "routes", 
-  "update", "active", "clear"
+  "update", "active", "clear", "set", "get", 
+  "panic"
 }
 table.sort(Commands)
 Command = {}
@@ -332,6 +349,64 @@ function Command.clear.run(args)
   end
 end
 
+Command.get = {}
+Command.get.usage = "get <address>"
+Command.get.desc = "Get machine details"
+Command.get.help = "Get detailed information about the machine at this address"
+function Command.get.run(args)
+  --[[
+    Function for the /get command.
+    Grabs information about a specific machine.
+  ]]
+  if #args ~= 1 then
+    log("Usage: "..Command.get.usage)
+  else
+    log("Fetching machine details")
+    Modem.transmit(GlobChannel, MyChannel, {
+      instruct="get",
+      my_type="client",
+      address=tonumber(args[1])
+    })
+  end
+end
+
+Command.set = {}
+Command.set.usage = "set <address> <state>"
+Command.set.desc = "Override a machine"
+Command.set.help = "Change what a machine is meant to be doing"
+function Command.set.run(args)
+  --[[
+    Function for the /set command.
+    Changes the state of a particular machine.
+  ]]
+  if #args ~= 2 then
+    log("Usage: "..Command.get.usage)
+  else
+    log("Sending state change request")
+    Modem.transmit(GlobChannel, MyChannel, {
+      instruct="set",
+      my_type="client",
+      address=tonumber(args[1]),
+      state=args[2]
+    })
+  end
+end
+
+Command.panic = {}
+Command.panic.usage = "panic"
+Command.panic.desc = "Turns all signals to red"
+Command.panic.help = "Turns all signals to red when they become available."
+function Command.panic.run(args)
+  --[[
+    Function for the /panic command.
+    Turns all signals to red to encourage players to stop their trains.
+  ]]
+  Modem.transmit(GlobChannel, MyChannel, {
+    instruct="panic",
+    my_type="client"
+  })
+end
+
 
 log("Started Skyline "..table.concat(Version, ".").." client on channel "..MyChannel)
 while true do
@@ -350,10 +425,16 @@ while true do
     -- If it's a callback, then we check for that here. Callbacks contain a callback field.
     if payload.callback ~= nil then
       this_check = {"route", "add_route"}
+      other_check = {"get", "set"}
       if contains(this_check, payload.callback) then
         log("Reply: "..payload.callback.." '"..payload.state.."' : "..payload.instruct)
       elseif contains(other_check, payload.callback) then
-        log("Reply: "..payload.callback.." : "..payload.instruct)
+        if payload.state == "failed" then
+          log("Failed: Machine was not found in the database.")
+        else
+          log(payload.data[3].."@"..payload.data[2])
+          log("state = "..payload.data[4])
+        end
       end
     end
 
@@ -376,7 +457,7 @@ while true do
         log("  '"..payload.data[index].."';  '"..payload.data[index+1].."';  '"..payload.data[index+2].."'")
         index = index + 3
       end
-    end 
+    end
 
     if payload.instruct == "update" then
       -- Update our client
