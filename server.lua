@@ -4,7 +4,7 @@ GlobChannel = 8190
 Modem = peripheral.find("modem")
 Modem.open(GlobChannel)
 -- The current network version.
-Version = {1,0}
+Version = {1,0,1}
 -- A log of messages.
 Log = {}
 -- All data about the network.
