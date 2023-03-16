@@ -220,7 +220,8 @@ function Command.route.run(args)
   else
     Modem.transmit(GlobChannel, MyChannel, {
       instruct="route",
-      state=args[1]
+      state=args[1],
+      my_type="client"
     })
     log("Requested route '"..args[1].."'")
   end
@@ -245,7 +246,8 @@ function Command.addroute.run(args)
     Modem.transmit(GlobChannel, MyChannel, {
       instruct="add_route",
       name=route_name,
-      data=route_data
+      data=route_data,
+      my_type="client"
     })
     route_file.close()
     log("Creating new route '"..route_name.."'")
@@ -262,7 +264,8 @@ function Command.reset.run(args)
     Resets routes to their default.
   ]]
   Modem.transmit(GlobChannel, MyChannel, {
-    instruct="reset"
+    instruct="reset",
+    my_type="client"
   })
   log("Sending reset request")
 end
@@ -292,7 +295,8 @@ function Command.routes.run(args)
     Grabs a list of all routes available to the server.
   ]]
   Modem.transmit(GlobChannel, MyChannel, {
-    instruct="routes"
+    instruct="routes",
+    my_type="client"
   })
   log("Requesting all routes")
 end
