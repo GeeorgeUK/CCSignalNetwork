@@ -6,7 +6,7 @@ MyChannel = os.getComputerID() + 8192
 Modem = peripheral.find("modem")
 Modem.open(MyChannel)
 -- The current version of this switch.
-Version = {1,0,10}
+Version = {1,0,11}
 -- A log of messages
 Log = {}
 -- Default state of this machine (Off switch)
