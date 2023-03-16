@@ -5,7 +5,7 @@ MyChannel = os.getComputerID() + 8192
 -- The global modem handler
 Modem = peripheral.find("modem")
 -- The global version identifier. If it does not match the server, we update
-Version = {1,0,18}
+Version = {1,0,19}
 -- A local log of messages
 Log = {}
 -- A local input cursor and table
