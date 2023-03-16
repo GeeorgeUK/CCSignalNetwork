@@ -4,7 +4,7 @@ GlobChannel = 8190
 Modem = peripheral.find("modem")
 Modem.open(GlobChannel)
 -- The current network version.
-Version = {1,0,17}
+Version = {1,0,18}
 -- A log of messages.
 Log = {}
 -- All data about the network.
@@ -217,7 +217,7 @@ function ParseRoute(file)
     - Runs SaveState on each item to save locally
   ]]
   if fs.exists(file) then
-    RouteHistory[#RouteHistory+1] = file
+    ActiveRoutes[#ActiveRoutes+1] = file
     local csv_data = {}
     csv_data.headers, csv_data.entries = load_csv(file)
     for index, item in ipairs(csv_data.entries) do
@@ -545,8 +545,8 @@ while true do
         set_all_states("switch", 0)
         -- 3. Save the Network data to file
         save_csv(Network.headers, Network.entries, "database.csv")
-        -- 4. Reset the RouteHistory table
-        RouteHistory = {}
+        -- 4. Reset the ActiveRoutes table
+        ActiveRoutes = {}
         -- 5. Process the route default.csv
         ParseRoute("routes/default.csv")
         Modem.transmit(address, GlobChannel, {
