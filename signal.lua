@@ -6,7 +6,7 @@ MyChannel = os.getComputerID() + 8192
 Modem = peripheral.find("modem")
 Modem.open(MyChannel)
 -- The current network version.
-Version = {1,0,16}
+Version = {1,0,17}
 -- A log of messages
 Log = {}
 -- Default state of this machine (Red Signal)
@@ -194,7 +194,8 @@ while true do
         if payload.your_type == "signal" then
           -- Here we handle update files.
           SaveWithBackup(payload.data, "startup.lua")
-          os.reboot()
+          shell.run("startup.lua")
+          return
         end
 
       elseif payload.instruct == "set" then

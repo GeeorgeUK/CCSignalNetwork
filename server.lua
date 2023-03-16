@@ -4,7 +4,7 @@ GlobChannel = 8190
 Modem = peripheral.find("modem")
 Modem.open(GlobChannel)
 -- The current network version.
-Version = {1,0,16}
+Version = {1,0,17}
 -- A log of messages.
 Log = {}
 -- All data about the network.
@@ -216,10 +216,10 @@ function ParseRoute(file)
     The parseroute iterates over each item in the route:
     - Runs SaveState on each item to save locally
   ]]
-  if fs.exists("routes/"..file) then
+  if fs.exists(file) then
     RouteHistory[#RouteHistory+1] = file
     local csv_data = {}
-    csv_data.headers, csv_data.entries = load_csv("routes/"..file)
+    csv_data.headers, csv_data.entries = load_csv(file)
     for index, item in ipairs(csv_data.entries) do
       SaveState(item[2], item[3], item[4])
     end
