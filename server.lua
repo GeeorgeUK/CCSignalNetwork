@@ -405,6 +405,7 @@ while true do
           content = new_file.readAll()
           Modem.transmit(address, GlobChannel, {
             instruct="update",
+            your_type=payload.my_type,
             data=content,
             version=Version
           })
