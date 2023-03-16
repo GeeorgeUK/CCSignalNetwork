@@ -6,7 +6,7 @@ MyChannel = os.getComputerID() + 8192
 Modem = peripheral.find("modem")
 Modem.open(MyChannel)
 -- The current network version.
-Version = {1,0,1}
+Version = {1,0,2}
 -- A log of messages
 Log = {}
 -- Default state of this machine (Red Signal)
