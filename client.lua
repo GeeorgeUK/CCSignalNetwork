@@ -280,7 +280,8 @@ function Command.active.run(args)
     Grabs a list of activated routes since the last reset.
   ]]
   Modem.transmit(GlobChannel, MyChannel, {
-    instruct="active"
+    instruct="active",
+    my_type="client"
   })
   log("Requesting active routes")
 end
