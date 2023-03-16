@@ -331,6 +331,7 @@ function Command.clear.run(args)
   end
 end
 
+
 log("Started Skyline "..table.concat(Version, ".").." client on channel "..MyChannel)
 while true do
   -- Update the log display and the input display
