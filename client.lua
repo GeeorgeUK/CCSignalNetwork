@@ -322,7 +322,7 @@ function Command.clear.run(args)
     Function for the /clear command.
     Creates a new log global variable.
   ]]
-  while #Log > 1 do
+  while #Log > 0 do
     table.remove(Log, 1)
   end
 end
