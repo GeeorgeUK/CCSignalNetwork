@@ -10,7 +10,7 @@ Log = {}
 -- All data about the network.
 Network = {}
 -- Our route history
-RouteHistory = {}
+ActiveRoutes = {}
 
 
 local function log(message)
