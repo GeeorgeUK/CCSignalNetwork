@@ -419,6 +419,8 @@ while true do
       elseif payload.instruct == "routes" then
         -- This returns a list of all routes
 
+        log("A "..payload.my_type.."@"..address.." requested all routes")
+
         -- 1. Get a list of all files in /routes/ and /routes/autorun
         local files = fs.list("routes")
         
@@ -431,6 +433,8 @@ while true do
       elseif payload.instruct == "active" then
         -- This returns a list of all active routes since the last reset.
 
+        log("A "..payload.my_type.."@"..address.." requested active routes")
+
         -- 1. Send our ActiveRoutes table
         Modem.transmit(address, GlobChannel, {
           instruct="active_routes",
@@ -439,6 +443,8 @@ while true do
       
       elseif payload.instruct == "route" then
         -- This means a client is executing a route.
+
+        log("A "..payload.my_type.."@"..address.." is executing a route")
 
         -- 1. Send a pending state to the client
         Modem.transmit(address, GlobChannel, {
@@ -453,6 +459,7 @@ while true do
             callback="route",
             state=this_route
           })
+          log("Success, the route has been executed")
         else
           -- 3. Send a state to the client depending on success
           Modem.transmit(address, GlobChannel, {
@@ -460,11 +467,15 @@ while true do
             callback="route",
             state=this_route
           })
+          log("Failed, as the route does not exist")
         end
         -- 4. Add the route name to the active routes table
         ActiveRoutes[#ActiveRoutes+1] = this_route
      
       elseif payload.instruct == "add_route" then
+
+        log("A "..payload.my_type.."@"..address.." is adding a new route")
+
         -- This means a client is creating a new route with the name.
         route_name = payload.name
         route_data = payload.data
@@ -475,6 +486,7 @@ while true do
             callback="add_route",
             state=route_name
           })
+          log("Failed, the route already exists.")
         else
           -- 2. Save the route file if we can
           local route_file = fs.open("routes/"..route_name..".csv", "w")
@@ -486,10 +498,13 @@ while true do
             callback="add_route",
             state=route_name
           })
+          log("Success, the route has been added")
         end
       
       elseif payload.instruct == "reset" then
         -- The client has reset to the default.
+
+        log("A "..payload.my_type.."@"..address.." requested a reset")
 
         -- 1. Set all signals to red
         set_all_states("signal", 1)
@@ -505,6 +520,8 @@ while true do
           instruct="success",
           callback="reset"
         })
+
+        log("Reset is complete")
 
       end
     end
