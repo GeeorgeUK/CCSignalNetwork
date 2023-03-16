@@ -88,23 +88,6 @@ function PingState()
 end
 
 
-
---[[
-  Not necessary to function, but this is an important reference to
-  what each state values mean.
-]]
-Signal = {
-  off=0,
-  red=1,
-  yellow=7,
-  green=15,
-  0="off",
-  1="red",
-  7="yellow",
-  15="green"
-}
-
-
 function SaveState()
 
   --[[
