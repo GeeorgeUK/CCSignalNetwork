@@ -171,7 +171,7 @@ ApplyState(State)
 
 
 log("Started Skyline signal on channel "..MyChannel)
-log("Setting initial state to "..Signal[tostring(State)])
+log("Setting initial state to "..Signal[State])
 while true do
   show_log(term.native())
   local event = {os.pullEvent()}
