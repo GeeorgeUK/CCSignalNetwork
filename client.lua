@@ -321,7 +321,9 @@ function Command.clear.run(args)
     Function for the /clear command.
     Creates a new log global variable.
   ]]
-  Log = {}
+  while #Log > 1 do
+    table.remove(Log, 1)
+  end
 end
 
 log("Started client on channel "..MyChannel)
