@@ -467,7 +467,7 @@ while true do
         -- 1. Send our ActiveRoutes table
         Modem.transmit(address, GlobChannel, {
           instruct="active_routes",
-          data = RouteHistory
+          data = RouteHistory or {}
         })
       
       elseif payload.instruct == "route" then
