@@ -355,6 +355,27 @@ while true do
       end
     end
 
+    local this_check = {"all_routes", "active_routes" }
+    if contains(this_check, payload.instruct) then
+      log("Routes ("..#payload.data.."):")
+      index = 1
+      while true do
+        if payload.data[index+2] == nil then
+          if payload.data[index+1] == nil then
+            if payload.data[index] == nil then
+              break
+            end
+            log("  '"..payload.data[index].."'")
+            break
+          end
+          log("  '"..payload.data[index].."';  '"..payload.data[index+1].."'")
+          break
+        end
+        log("  '"..payload.data[index].."';  '"..payload.data[index+1].."';  '"..payload.data[index+2].."'")
+        index = index + 3
+      end
+    end 
+
     if payload.instruct == "update" then
       -- Update our client
       if payload.your_type == "client" then
@@ -381,7 +402,8 @@ while true do
       -- All other words are the arguments, which are passed to the function.
       local this_arguments = {}
       if #this_input > 1 then
-        this_arguments = table.remove(this_input, 1)
+        table.remove(this_input, 1)
+        this_arguments = this_input
       end
 
       -- 3. Search in Commands for the command.

@@ -30,6 +30,7 @@ local function show_log(here)
   -- set the cursor position to the top corner.
   local xSize, ySize = here.getSize()
   here.setCursorPos(1,1)
+  here.clear()
 
   -- If we have a big logfile, we set an offset.
   offset = #Log - ySize

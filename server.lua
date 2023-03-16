@@ -452,22 +452,26 @@ while true do
         })
         -- 2. Call the ParseRoute on the file if it exists
         local this_route = payload.state
-        if fs.exists("routes/"..this_route) then
-          ParseRoute("routes/"..this_route)
-          Modem.transmit(address, GlobChannel, {
-            instruct="success",
-            callback="route",
-            state=this_route
-          })
-          log("Success, the route has been executed")
+        if this_route ~= nil then
+          if fs.exists("routes/"..this_route) then
+            ParseRoute("routes/"..this_route)
+            Modem.transmit(address, GlobChannel, {
+              instruct="success",
+              callback="route",
+              state=this_route
+            })
+            log("Success, the route has been executed")
+          else
+            -- 3. Send a state to the client depending on success
+            Modem.transmit(address, GlobChannel, {
+              instruct="failed",
+              callback="route",
+              state=this_route
+            })
+            log("Failed, as the route does not exist")
+          end
         else
-          -- 3. Send a state to the client depending on success
-          Modem.transmit(address, GlobChannel, {
-            instruct="failed",
-            callback="route",
-            state=this_route
-          })
-          log("Failed, as the route does not exist")
+          log("Failed, as the route was corrupted or missing")
         end
         -- 4. Add the route name to the active routes table
         ActiveRoutes[#ActiveRoutes+1] = this_route
