@@ -66,7 +66,7 @@ Switch[15] = "on"
 -- If we do not have a saved state, create a new default one.
 if not fs.exists("state") then
   local state_file = fs.open("state", "w")
-  state_file.write(7)
+  state_file.write(0)
   state_file.close()
 end
 
