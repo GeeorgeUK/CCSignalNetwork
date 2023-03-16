@@ -58,10 +58,10 @@ end
 
 
 Signal = {}
-Signal["0"] = "off"
-Signal["1"] = "red"
-Signal["7"] = "yellow"
-Signal["15"] = "green"
+Signal[0] = "off"
+Signal[1] = "red"
+Signal[7] = "yellow"
+Signal[15] = "green"
 
 
 -- If we do not have a saved state, create a new default one.

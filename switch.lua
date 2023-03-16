@@ -58,8 +58,8 @@ end
 
 
 Switch = {}
-Switch["0"] = "off"
-Switch["15"] = "on"
+Switch[0] = "off"
+Switch[15] = "on"
 
 
 -- If we do not have a saved state, create a new default one.
