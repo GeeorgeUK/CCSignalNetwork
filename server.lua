@@ -361,8 +361,12 @@ while true do
 
   -- Wait here until we receive a modem message event
   local e = {os.pullEvent()}
-
-  if e[1] == "modem_message" then
+  if e[1] == "key" then
+    if e[2] == keys.space then
+      -- Reinstalls.
+      shell.run("installer.lua")
+    end
+  elseif e[1] == "modem_message" then
     -- Make sure the message is valid
     if type(e[5]) == "table" then
 
