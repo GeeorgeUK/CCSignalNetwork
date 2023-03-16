@@ -42,10 +42,10 @@ for index, item in ipairs(items) do
         fs.delete(item[1])
     end
     local site = http.get(prefix..item[2])
-    local file = fs.open(item[1])
+    local file = fs.open(item[1], "w")
     file.write(site.readAll())
     file.close()
-    sleep(0.2)
+    sleep(0.05)
 end
 print("Complete. Press any key to exit")
 os.pullEvent("char")
