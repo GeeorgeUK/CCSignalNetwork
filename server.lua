@@ -4,7 +4,7 @@ GlobChannel = 8190
 Modem = peripheral.find("modem")
 Modem.open(GlobChannel)
 -- The current network version.
-Version = {1,0,2}
+Version = {1,0,3}
 -- A log of messages.
 Log = {}
 -- All data about the network.
@@ -253,7 +253,7 @@ function add_device(address, this_type, state)
   table.insert(Network.entries, {
     #Network.entries+1, address, this_type, state
   })
-  return #Network.entries, {#Network.entries, address, this_type, state}
+  return {#Network.entries, address, this_type, state}
 end
 
 
