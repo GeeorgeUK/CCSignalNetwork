@@ -250,7 +250,7 @@ function add_device(address, this_type, state)
   --[[
     Adds the device to the database
   ]]
-  table.append(Network.entries, {
+  table.insert(Network.entries, {
     #Network.entries+1, address, this_type, state
   })
   return #Network.entries, {#Network.entries, address, this_type, state}
