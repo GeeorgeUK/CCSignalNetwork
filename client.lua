@@ -61,6 +61,7 @@ local function show_input(here)
   -- Get the size of this window
   local xSize, ySize = here.getSize()
   here.setCursorPos(1,1)
+  here.clearLine()
 
   -- Write the input to this window.
   here.write(table.concat(Input, ""))
@@ -127,26 +128,21 @@ InputDisplay.clear()
 
 local function split(unprocessed, separator)
 
-  --[[ 
-    Split a string by a separator into a table.
-  ]]
+  -- Store the result here
+  local result = {}
 
-  -- This will be our output.
-  local processed = {}
+  -- Add the separator to the end of the file
+  unprocessed = unprocessed..separator
 
-  -- If we have no separator, we should use a space character.
-  local seperator = separator or " "
+  -- Match each instance in the string with a separator at the end, removing the separator
+  for item in str.gmatch("(.-)"..separator) do
 
-  -- This is the pattern of characters we will use to split the string.
-  local pattern = string.format("([^%s]+)", separator)
+    -- Add each result to the table
+    table.insert(result, item)
+  end
 
-  -- Process the unprocessed data using the pattern
-  string.gsub(unprocessed, pattern, function(this_item) 
-    processed[#processed + 1] = this_item 
-  end)
-
-  -- Return our processed result. We are done!
-  return processed
+  -- Finally, return the result
+  return result
 end
 
 
@@ -176,7 +172,10 @@ local function contains(container, something)
 end
 
 Callbacks = {}
-Commands = {"help", "route", "addroute", "reset"}
+Commands = {
+  "help", "route", "addroute", "reset", "routes", 
+  "update", "active"
+}
 Command = {}
 
 Command.help = {}
@@ -309,6 +308,7 @@ function Command.update.run(args)
 end
 
 
+log("Started client on channel "..MyChannel)
 while true do
   -- Update the log display and the input display
   show_log(LogDisplay)
@@ -342,18 +342,17 @@ while true do
 
   elseif event[1] == "char" then
 
-    -- Add the character to the input table
-    Input[#Cursor] = event[2]
+    table.insert(Input, Cursor, event[2])
     Cursor = Cursor + 1
 
   elseif event[1] == "key" then
-
+      
     if event[2] == keys.enter and #Input >= 1 then
       -- 1. Build a string of the input.
-      local this_input = table.concat(Input, "")
+      local this_input = table.concat(Input)
 
       -- 2. Split the input string into each word; Word 1 is the command.
-      local this_input = split(this_input)
+      local this_input = split(this_input, " ")
       local this_command = this_input[1]
 
       -- All other words are the arguments, which are passed to the function.
@@ -391,7 +390,7 @@ while true do
 
       -- Clear the character in the input table before the cursor.
       if Cursor > 1 then
-        table.remove(Input, Cursor)
+        table.remove(Input, Cursor-1)
       end
     
     elseif event[2] == keys.delete then

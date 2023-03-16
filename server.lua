@@ -61,26 +61,21 @@ end
 
 local function split(unprocessed, separator)
 
-  --[[ 
-    Split a string by a separator into a table.
-  ]]
+  -- Store the result here
+  local result = {}
 
-  -- This will be our output.
-  local processed = {}
+  -- Add the separator to the end of the file
+  unprocessed = unprocessed..separator
 
-  -- If we have no separator, we should use a space character.
-  local seperator = separator or " "
+  -- Match each instance in the string with a separator at the end, removing the separator
+  for item in str.gmatch("(.-)"..separator) do
 
-  -- This is the pattern of characters we will use to split the string.
-  local pattern = string.format("([^%s]+)", separator)
+    -- Add each result to the table
+    result[#result+1] = item
+  end
 
-  -- Process the unprocessed data using the pattern
-  string.gsub(unprocessed, pattern, function(this_item) 
-    processed[#processed + 1] = this_item 
-  end)
-
-  -- Return our processed result. We are done!
-  return processed
+  -- Finally, return the result
+  return result
 end
 
 
