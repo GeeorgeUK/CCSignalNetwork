@@ -4,7 +4,7 @@ GlobChannel = 8190
 Modem = peripheral.find("modem")
 Modem.open(GlobChannel)
 -- The current network version.
-Version = {1,0,7}
+Version = {1,0,8}
 -- A log of messages.
 Log = {}
 -- All data about the network.
@@ -399,7 +399,8 @@ while true do
         local their_state = item[4]
 
         -- 2. To save on bandwidth, only send the change if it's different
-        if payload.state == their_state then
+        -- (We should send if the version is different to trigger an update)
+        if payload.state == their_state and payload.version == Version then
           log("Info: "..their_type.."@"..address..": state is "..their_state.." as expected")
         else
           SendState(address, their_type, their_state)
