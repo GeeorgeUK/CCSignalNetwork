@@ -182,7 +182,7 @@ while true do
   -- Wait to continue
   local event = {os.pullEvent()}
 
-  -- Received a message from the 
+  -- Received a message
   if event[1] == "modem_message" then
     if type(event[5]) == "table" then
 

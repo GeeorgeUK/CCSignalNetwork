@@ -100,7 +100,7 @@ function SaveState()
     Saves the state to file.
   ]]
 
-  local state_file = fs.open("state")
+  local state_file = fs.open("state", "w")
   state_file.write(State)
   state_file.close()
 
@@ -115,6 +115,7 @@ function ApplyState()
 
   redstone.setAnalogOutput("top", State)
   redstone.setAnalogOutput("left", State)
+  log("Setting state to "..Switch[State])
 
 end
 
@@ -165,29 +166,46 @@ end
 
 
 -- Either applies the saved state, or applies the default state.
-ApplyState(State)
+ApplyState()
+PingState()
 
 
 log("Started Skyline switch on channel "..MyChannel)
-log("Setting initial state to "..Switch[State])
 while true do
+
+  -- Display the log
   show_log(term.native())
+
+  -- Wait to continue
   local event = {os.pullEvent()}
+
+  -- Received a message
   if event[1] == "modem_message" then
     if type(event[5]) == "table" then
 
-      if v4.instruct == "update" then
-        if v4.your_type == "switch" then
+      -- Our payload
+      payload = event[5]
+
+      if payload.instruct == "update" then
+        if payload.your_type == "switch" then
           -- Here we handle update files.
-          SaveWithBackup(v4.data, "startup.lua")
+          SaveWithBackup(payload.data, "startup.lua")
           os.reboot()
         end
-      elseif v4.instruct == "set" then
-        if v4.your_type == "switch" then
+      elseif payload.instruct == "set" then
+        if payload.your_type == "switch" then
           -- Here we handle signals.
-          State = v4.state
+          State = payload.state
           UpdateState()
         end
+      end
+
+      -- Automatically update if our version does not match
+      if payload.version ~= Version then
+        Modem.transmit(GlobChannel, MyChannel, {
+          my_type = "switch",
+          instruct = "update"
+        })
       end
       
     end
