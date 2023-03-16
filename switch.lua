@@ -155,7 +155,7 @@ function SaveWithBackup(data, filename)
     if fs.exists("old/" .. filename) then
       fs.delete("old/" .. filename)
     end
-    fs.move(filename, "old/filename")
+    fs.move(filename, "old/" .. filename)
   end
   -- Write to a temporary update file, just in case there's a failure.
   local file_handler = fs.open(".temp", "w")
