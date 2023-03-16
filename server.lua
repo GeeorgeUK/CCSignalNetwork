@@ -390,6 +390,9 @@ while true do
 
         -- 1. Get the device details by its address
         local _, item = get_device(address)
+        if item == nil then
+          add_device(address, payload.my_type, payload.state)
+        end
         local their_type = item[3]
         local their_state = item[4]
 
