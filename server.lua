@@ -406,8 +406,7 @@ while true do
           Modem.transmit(address, GlobChannel, {
             instruct="update",
             your_type=payload.my_type,
-            data=content,
-            version=Version
+            data=content
           })
           new_file.close()
           log("Sent update file to "..payload.my_type)

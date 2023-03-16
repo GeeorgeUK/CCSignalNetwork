@@ -352,7 +352,7 @@ while true do
     if payload.instruct == "update" then
       -- Update our client
       if payload.your_type == "client" then
-        SaveWithBackup(payload.data)
+        SaveWithBackup(payload.data, "startup.lua")
         os.reboot()
       end
     end
