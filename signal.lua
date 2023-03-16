@@ -179,17 +179,17 @@ while true do
   local event = {os.pullEvent()}
   if event[1] == "modem_message" then
     if type(event[5]) == "table" then
-
-      if v4.instruct == "update" then
-        if v4.your_type == "signal" then
+      payload = event[5]
+      if payload.instruct == "update" then
+        if payload.your_type == "signal" then
           -- Here we handle update files.
-          SaveWithBackup(v4.data, "startup.lua")
+          SaveWithBackup(payload.data, "startup.lua")
           os.reboot()
         end
-      elseif v4.instruct == "set" then
-        if v4.your_type == "signal" then
+      elseif payload.instruct == "set" then
+        if payload.your_type == "signal" then
           -- Here we handle signals.
-          State = v4.state
+          State = payload.state
           UpdateState()
         end
       end
