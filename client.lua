@@ -182,7 +182,7 @@ Command = {}
 
 Command.help = {}
 Command.help.usage = "help [topic?]"
-Command.help.desc = "Show a list of commands"
+Command.help.desc = "Show commands."
 Command.help.help = "Use this command to learn how to use commands."
 function Command.help.run(args)
   --[[
@@ -229,7 +229,7 @@ end
 
 Command.addroute = {}
 Command.addroute.usage = "addroute <route_name> <route_path>"
-Command.addroute.desc = "Opens the route creation wizard"
+Command.addroute.desc = "Create a route."
 Command.addroute.help = "Create a new route CSV file, and send it to the server."
 function Command.addroute.run(args)
   --[[
@@ -255,7 +255,7 @@ end
 
 Command.reset = {}
 Command.reset.usage = "reset"
-Command.reset.desc = "Resets all routes to their default"
+Command.reset.desc = "Reset all routes."
 Command.reset.help = "Sets all machines to the default value, then runs default.csv"
 function Command.reset.run(args)
   --[[
@@ -270,7 +270,7 @@ end
 
 Command.active = {}
 Command.active.usage = "active"
-Command.active.desc = "Gets a list of active routes"
+Command.active.desc = "List active routes."
 Command.active.help = "Gets a list of all activated routes since the last reset"
 function Command.active.run(args)
   --[[
@@ -285,7 +285,7 @@ end
 
 Command.routes = {}
 Command.routes.usage = "routes"
-Command.routes.desc = "Gets a list of all routes"
+Command.routes.desc = "List all routes."
 Command.routes.help = "Gets a list of all available routes to the server"
 function Command.routes.run(args)
   --[[
@@ -300,7 +300,7 @@ end
 
 Command.update = {}
 Command.update.usage = "update"
-Command.update.desc = "Updates your client"
+Command.update.desc = "Updates the client."
 Command.update.help = "Updates your client to the latest version"
 function Command.update.run(args)
   --[[
@@ -316,7 +316,7 @@ end
 
 Command.clear = {}
 Command.clear.usage = "clear"
-Command.clear.desc = "Clear all logs"
+Command.clear.desc = "Clear all logs."
 Command.clear.help = "Clears all the logs to make it easier to read the screen"
 function Command.clear.run(args)
   --[[
