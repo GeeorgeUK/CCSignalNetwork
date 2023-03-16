@@ -396,6 +396,7 @@ while true do
           sensor="/updates/sensor.lua",
           client="/updates/client.lua"
         }
+        log("A "..payload.my_type.."@"..address.." requested an update")
 
         -- 1. What type did they say they were?
         if contains(ValidUpdateTypes, payload.my_type) then
@@ -408,6 +409,7 @@ while true do
             version=Version
           })
           new_file.close()
+          log("Sent update file to "..payload.my_type)
         end
       
       elseif payload.instruct == "routes" then

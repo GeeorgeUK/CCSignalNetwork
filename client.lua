@@ -65,6 +65,7 @@ local function show_input(here)
 
   -- Write the input to this window.
   here.write(table.concat(Input, ""))
+  here.setCursorPos(Cursor,1)
 end
 
 
@@ -180,7 +181,7 @@ Command = {}
 
 Command.help = {}
 Command.help.usage = "help [topic?]"
-Command.help.desc = "Displays a list of available commands."
+Command.help.desc = "Show a list of commands"
 Command.help.help = "Use this command to learn how to use commands."
 function Command.help.run(args)
   --[[
@@ -312,6 +313,17 @@ function Command.update.run(args)
   log("Requesting client update")
 end
 
+Command.clear = {}
+Command.clear.usage = "clear"
+Command.clear.desc = "Clear all logs"
+Command.clear.help = "Clears all the logs to make it easier to read the screen"
+function Command.clear.run(args)
+  --[[
+    Function for the /clear command.
+    Creates a new log global variable.
+  ]]
+  Log = {}
+end
 
 log("Started client on channel "..MyChannel)
 while true do
@@ -401,7 +413,7 @@ while true do
     elseif event[2] == keys.delete then
 
       -- Clear the character in the input table after the cursor.
-      if Cursor < #Input then
+      if Cursor <= #Input then
         table.remove(Input, Cursor)
       end
     
