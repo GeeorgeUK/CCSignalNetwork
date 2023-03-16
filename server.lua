@@ -332,7 +332,7 @@ function SendState(address, their_type, new_state)
     - Schedules will be given an updated table of schedules.
     This function does not expect any response and will assume the state was set successfully.
   ]]
-  Modem.transmit(address, GlobChannel, {
+  Modem.transmit(tonumber(address), GlobChannel, {
     your_type=their_type,
     instruct="set",
     state=new_state,
