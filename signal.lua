@@ -102,7 +102,7 @@ function SaveState()
     Saves the state to file.
   ]]
 
-  local state_file = fs.open("state")
+  local state_file = fs.open("state", "w")
   state_file.write(State)
   state_file.close()
 
