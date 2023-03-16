@@ -175,8 +175,9 @@ end
 Callbacks = {}
 Commands = {
   "help", "route", "addroute", "reset", "routes", 
-  "update", "active"
+  "update", "active", "clear"
 }
+table.sort(Commands)
 Command = {}
 
 Command.help = {}
