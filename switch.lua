@@ -200,7 +200,11 @@ while true do
         end
         
         -- Automatically update if our version does not match
-        if payload.version[2] > Version[2] then
+        if (
+          payload.version[3] > Version[3] or
+          payload.version[2] > Version[2] or
+          payload.version[1] > Version[1] 
+        ) then
           Modem.transmit(GlobChannel, MyChannel, {
             my_type = "signal",
             instruct = "update"
