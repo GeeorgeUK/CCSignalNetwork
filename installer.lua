@@ -6,7 +6,7 @@ local items = {
     },
     {
         "routes/default.csv",
-        "default.csv"
+        "routes/default.csv"
     },
     {
         "updates/switch.lua",

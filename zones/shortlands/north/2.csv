@@ -1,0 +1,11 @@
+index,address,type,state
+1,8326,switch,15
+2,8332,switch,15
+3,8334,switch,0
+4,8338,signal,15
+5,8339,signal,1
+6,8349,signal,15
+7,8348,signal,1
+8,8359,signal,0
+9,8363,signal,15
+10,8366,signal,1
