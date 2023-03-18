@@ -6,7 +6,7 @@ MyChannel = os.getComputerID() + 8192
 Modem = peripheral.find("modem")
 Modem.open(MyChannel)
 -- The global version identifier. If it does not match the server, we update
-Version = {1,0,21}
+Version = {1,0,22}
 -- A local log of messages
 Log = {}
 -- A local input cursor and table
@@ -427,6 +427,7 @@ while true do
     if payload.callback ~= nil then
       this_check = {"route", "add_route"}
       other_check = {"get", "set"}
+      final_check = {"success", "failed"} 
       if contains(this_check, payload.callback) then
         log("Reply: "..payload.callback.." '"..payload.state.."' : "..payload.instruct)
       elseif contains(other_check, payload.callback) then
@@ -436,6 +437,8 @@ while true do
           log(payload.data[3].."@"..payload.data[2])
           log("state = "..payload.data[4])
         end
+      elseif contains(final_check, payload.instruct) then
+        log(payload.callback..": "..payload.instruct)
       end
     end
 
@@ -459,6 +462,8 @@ while true do
         index = index + 3
       end
     end
+
+    
 
     if payload.instruct == "update" then
       -- Update our client
