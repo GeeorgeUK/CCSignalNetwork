@@ -4,7 +4,7 @@ GlobChannel = 8190
 Modem = peripheral.find("modem")
 Modem.open(GlobChannel)
 -- The current network version.
-Version = {1,0,20}
+Version = {1,0,21}
 -- A log of messages.
 Log = {}
 -- All data about the network.
@@ -280,7 +280,7 @@ function get_device(address)
 end
 
 
-function set_device_type(address, new_type, new_state)
+function set_device(address, new_type, new_state)
   --[[
     Searches through the Network entries for the address, and updates it
   ]]
@@ -355,8 +355,8 @@ function SaveState(address, their_type, their_state)
     This function sends the state and updates the state locally.
   ]]
   log("To "..their_type.."#"..address..": set is "..their_state)
-  set_device_state(address, new_state)
   SendState(address, their_type, their_state)
+  set_device(address, their_type, their_state)
 end
 
 
@@ -575,8 +575,6 @@ while true do
         set_all_states("signal", 1)
         -- 2. Set all switches to off
         set_all_states("switch", 0)
-        -- 3. Save the Network data to file
-        save_csv(Network.headers, Network.entries, "database.csv")
         -- 4. Reset the ActiveRoutes table
         ActiveRoutes = {}
         -- 5. Process the route default.csv
