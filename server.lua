@@ -216,12 +216,15 @@ function ParseRoute(file)
     The parseroute iterates over each item in the route:
     - Runs SaveState on each item to save locally
   ]]
-  if fs.exists(file) then
+  if fs.exists(file..".csv") or fs.exists(file) then
+    if not string.find(file, ".csv") then
+    end
     ActiveRoutes[#ActiveRoutes+1] = file
     local csv_data = {}
     csv_data.headers, csv_data.entries = load_csv(file)
     for index, item in ipairs(csv_data.entries) do
       SaveState(item[2], item[3], item[4])
+      set_device(item[2], item[3], item[4])
     end
     save_csv(Network.headers, Network.entries, "database.csv")
   else
@@ -288,8 +291,12 @@ function set_device(address, new_type, new_state)
     if item[2] == address then
       Network.entries[index][3] = new_type
       Network.entries[index][4] = new_state
+      return
     end
   end
+  -- If we can't find the entry, create it
+  add_device(address, new_type, new_state)
+  return
 end
 
 
@@ -310,6 +317,7 @@ end
 function set_device_state(address, new_state)
   --[[
     Searches through the Network entries for the address, and updates it
+    Assumes that the device already exists
   ]]
   for index, item in ipairs(Network.entries) do
     if item[2] == address then
