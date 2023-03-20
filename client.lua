@@ -1,29 +1,37 @@
 -- The Global Channel 
 GlobChannel = 8190
+
 -- MyChannel is the unique channel of this Client
 MyChannel = os.getComputerID() + 8192
+
 -- The global modem handler
 Modem = peripheral.find("modem")
 Modem.open(MyChannel)
+
 -- The global version identifier. If it does not match the server, we update
-Version = {1,0,22}
+Version = {1,0,22,1}
+
 -- A local log of messages
 Log = {}
+
 -- A local input cursor and table
 Cursor = 1
 Input = {}
 
 
 local function log(message)
+
   --[[
     Add a message to the log table.
   ]]
+
   Log[#Log+1] = message
 
   -- Prune any really old log files to avoid using lots of RAM
   if #Log >= 100 then
     table.remove(Log, 1)
   end
+
 end
 
 
@@ -59,6 +67,7 @@ local function show_log(here)
     else
       here.write(Log[offset+index])
     end
+
   end
 end
 
@@ -89,6 +98,7 @@ end
 
 
 function SaveWithBackup(data, filename)
+  
   --[[
     Installs the update as a backup file.
     Just in case there's an error while installing.
@@ -192,9 +202,9 @@ end
 
 Callbacks = {}
 Commands = {
-  "help", "route", "addroute", "reset", "routes", 
-  "update", "active", "clear", "set", "get", 
-  "panic"
+  "help", "route", "platforms", "zones", "zone", 
+  "reset", "routes", "update", "active", "clear", 
+  "set", "get", "directions", "panic", "override"
 }
 table.sort(Commands)
 Command = {}
@@ -224,6 +234,79 @@ function Command.help.run(args)
   end
 end
 
+Command.zone = {}
+Command.zone.usage = "zone <zone> [?direction] <platform>"
+Command.zone.desc = "Set the path of a zone"
+Command.zone.help = "Configures a zone to have a specific configuration."
+function Command.zone.run(args)
+  --[[
+    Function for the /zone command.
+    This executes a routefile on the server, contained in the zones folder.
+  ]]
+  if #args == 2 or #args == 3 then
+    -- Don't check this zone for a direction
+    Modem.transmit(GlobChannel, MyChannel, {
+      instruct="zone",
+      state=table.concat(args, "/")..".csv",
+      my_type="client"
+    })
+  else
+    log("Usage: "..Command.zone.usage..": "..Command.zone.desc)
+  end
+end
+
+Command.zones = {}
+Command.zones.usage = "zones"
+Command.zones.desc = "Get a list of zones"
+Command.zones.help = "Returns a list of every available zone space"
+function Command.zones.run(args)
+  Modem.transmit(GlobChannel, MyChannel, {
+    instruct="zones",
+    my_type="client"
+  })
+end
+
+Command.directions = {}
+Command.directions.usage = "directions <zone>"
+Command.directions.desc = "Get a zone's directions"
+Command.directions.help = "Returns a list of directions available in a zone"
+function Command.directions.run(args)
+  --[[
+    Function for the /directions command.
+    This retrieves a list of available directions for a particular zone.
+  ]]
+  if #args == 1 then
+    Modem.transmit(GlobChannel, MyChannel, {
+      instruct="directions",
+      state=args[1],
+      my_type="client"
+    })
+  else
+    log("Usage: "..Command.directions.usage)
+  end
+end
+
+Command.platforms = {}
+Command.platforms.usage = "platforms <zone>"
+Command.platforms.desc = "Get a list of platforms in a zone"
+Command.platforms.help = "Returns a list of platforms available in a zone"
+function Command.platforms.run(args)
+  --[[
+    Function for the /platforms command.
+    This retrieves a list of available platforms for a particular zone.
+  ]]
+
+  if #args == 1 then
+    Modem.transmit(GlobChannel, MyChannel, {
+      instruct="platforms",
+      state=args[1],
+      my_type="client"
+    })
+  else
+    log("Usage: "..Command.platforms.usage)
+  end
+end
+
 Command.route = {}
 Command.route.usage = "route <routeName>"
 Command.route.desc = "Execute a route."
@@ -231,7 +314,7 @@ Command.route.help = "Tells the server we need to run a route, if it exists."
 function Command.route.run(args)
   --[[
     Function for the /route command.
-    This executes a routefile on the server.
+    This executes a routefile on the server, contained in the routes folder.
   ]]
   if #args == 0 then
     log("Usage: "..Command.route.usage)
@@ -425,9 +508,17 @@ while true do
 
     -- If it's a callback, then we check for that here. Callbacks contain a callback field.
     if payload.callback ~= nil then
-      this_check = {"route", "add_route"}
-      other_check = {"get", "set"}
-      final_check = {"success", "failed"} 
+      
+      this_check = {
+        "route", "add_route"
+      }
+      other_check = {
+        "get", "set"
+      }
+      final_check = {
+        "success", "failed"
+      }
+
       if contains(this_check, payload.callback) then
         log("Reply: "..payload.callback.." '"..payload.state.."' : "..payload.instruct)
       elseif contains(other_check, payload.callback) then
@@ -440,30 +531,39 @@ while true do
       elseif contains(final_check, payload.instruct) then
         log(payload.callback..": "..payload.instruct)
       end
+    
     end
 
-    local this_check = {"all_routes", "active_routes" }
+    local this_check = {
+      "all_routes", "active_routes", "all_zones", 
+      "all_platforms", "all_directions" 
+    }
+
     if contains(this_check, payload.instruct) then
-      log("Routes ("..#payload.data.."):")
+      log("Result ("..#payload.data.."):")
       index = 1
-      while true do
-        if payload.data[index+2] == nil then
-          if payload.data[index+1] == nil then
-            if payload.data[index] == nil then
+      if not pocket then
+        while true do
+          if payload.data[index+2] == nil then
+            if payload.data[index+1] == nil then
+              if payload.data[index] == nil then
+                break
+              end
+              log("  '"..payload.data[index].."'")
               break
             end
-            log("  '"..payload.data[index].."'")
+            log("  '"..payload.data[index].."';  '"..payload.data[index+1].."'")
             break
           end
-          log("  '"..payload.data[index].."';  '"..payload.data[index+1].."'")
-          break
+          log("  '"..payload.data[index].."';  '"..payload.data[index+1].."';  '"..payload.data[index+2].."'")
+          index = index + 3
         end
-        log("  '"..payload.data[index].."';  '"..payload.data[index+1].."';  '"..payload.data[index+2].."'")
-        index = index + 3
+      else
+        for index, item in ipairs(payload.data) do
+          log("  '"..item.."'")
+        end
       end
     end
-
-    
 
     if payload.instruct == "update" then
       -- Update our client

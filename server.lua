@@ -1,28 +1,38 @@
 -- The channel of this server
 GlobChannel = 8190
+
 -- A global modem handler.
 Modem = peripheral.find("modem")
 Modem.open(GlobChannel)
+
 -- The current network version.
-Version = {1,0,22}
+-- Sorted into {main, major, minor, build}
+-- Auto updaters will not attempt an update if the build changes.
+Version = {1,0,22,1}
+
 -- A log of messages.
 Log = {}
+
 -- All data about the network.
 Network = {}
+
 -- Our route history
 ActiveRoutes = {}
 
 
 local function log(message)
+
   --[[ 
     Add a message to the log database.
   ]]
+
   Log[#Log+1] = message
 
-  -- Prune any really old log files to avoid using lots of RAM
+  -- Prune any really old log files to avoid using lots of RAM.
   if #Log >= 100 then
     table.remove(Log, 1)
   end
+
 end
 
 
@@ -190,6 +200,88 @@ local function is_valid(headers, line)
 end
 
 
+local function is_valid_zone(zone_path)
+
+  --[[
+    A function that checks if a zone is valid.
+  ]]
+
+  -- Is this path a directory that exists?
+  if not fs.isDir(zone_path) then
+    return false, "does not exist"
+  end
+
+  -- We need at least 2 directions...
+  -- ... or at least two platforms
+  local paths_in_zone = fs.list(zone_path)
+  if #paths_in_zone < 2 then
+    return false, "not enough options"
+  end
+
+  -- If folders, then each folder must have the same number of platforms
+  local check_size = nil
+  for index, item in ipairs(paths_in_zone) do
+    if index == 1 then
+      if not fs.isDir() then
+        return true, "non-directional"
+      end
+      check_size = fs.list(item)
+      -- We allow single platform options if we are multidirectional, 
+      -- so cancel if at least one.
+      if #check_size < 1 then
+        return false, "empty folders"
+      end
+    end
+    for first, this in pairs(table.sort(check_size), table.sort(fs.list(item))) do
+      -- Iterate in pairs over each file in the folder
+      if first == nil or this == nil then
+        return false, "mismatched count"
+      if first ~= this then
+        return false, "mismatched names"
+      end
+    end
+  end
+    -- Checks complete
+  return true, "multi-directional"
+end
+
+
+local function get_valid_zones()
+  -- Returns a filtered list of valid zones
+  local result = {}
+  for _, item in ipairs(fs.list("zones")) do
+    if is_valid_zone(item) then
+      table.insert(result, item)
+    end
+  end
+  return result
+end
+
+
+local function get_zone_directions(zone)
+  local result = {}
+  if not fs.isDir("zones/"..zone) then return {} end
+  for _, item in ipairs(fs.list("zones/"..zone)) do
+    if fs.isDir(item) then
+      -- Means it's a direction, and not a platform
+      return fs.list("zones/"..zone)
+    end
+    return {}
+  end
+end
+
+local function get_zone_platforms(zone)
+  if not fs.isDir("zones/"..zone) then return {} end
+  for _, item in ipairs(fs.list("zones/"..zone)) do
+    if fs.isDir(item) then
+      -- Means it's a direction and not a platform
+      return fs.list("zones/"..zone.."/"..item)
+    end
+    return fs.list("zones/"..zone) 
+  end
+end
+
+
 local function append_csv(line, file)
 
   --[[
@@ -206,6 +298,28 @@ local function append_csv(line, file)
   -- Write and save the line. We are done!
   handler.writeLine(this_line)
   handler.close()
+end
+
+
+local function is_routeset_file(routesetfile)
+  --[[
+    Simply finds the suffix ".rs"
+  ]]
+  return string.sub(routesetfile, #routesetfile-2, #routesetfile) == ".rs"
+end
+
+
+function ParseRouteSet(routesetfile)
+  --[[
+    A routeset file is a list of paths to routes.
+  ]]
+  local file = fs.open(routesetfile, "r")
+  local this_line = file.readLine()
+  while this_line ~= nil do
+    ParseRoute(this_line)
+    this_line = file.readLine()
+  end
+  log("Routeset executed successfully")
 end
 
 
@@ -248,6 +362,10 @@ if not fs.isDir("routes") then
     routes_file.writeLine("index,address,type,state")
     routes_file.close()
   end
+end
+
+if not fs.isDir("zones") then
+  fs.makeDir("zones")
 end
 
 if not fs.isDir("updates") then
@@ -461,14 +579,52 @@ while true do
         log("A "..payload.my_type.."@"..address.." requested all routes")
 
         -- 1. Get a list of all files in /routes/ and /routes/autorun
-        local files = fs.list("routes")
+        local files = fs.list(payload.instruct.."/"..(payload.subfolders or ""))
         
         -- 2. Send a state to the client with a list of all routes
         Modem.transmit(address, GlobChannel, {
           instruct="all_routes",
           data = files
         })
-      
+
+      elseif payload.instruct == "zones" then
+        -- Grabs a list of valid zones and sends them to the client
+
+        log("A "..payload.my_type.."@"..address.." requested all zones")
+
+        -- 1. Get a list of all valid zones
+        local valid = get_valid_zones()
+
+        -- 2. Send a state to the client with this list of all valid zones
+        Modem.transmit(address, GlobChannel, {
+          instruct="all_zones",
+          data = valid
+        })
+
+      elseif payload.instruct == "platforms" then
+        -- Grabs a list of available platforms in a zone
+
+        log("A "..payload.my_type.."@"..address.." requested zone platform data")
+
+        local platforms = get_zone_platforms(payload.state)
+
+        Modem.transmit(address, GlobChannel, {
+          instruct="all_platforms",
+          data = platforms
+        })
+
+      elseif payload.instruct == "directions" then
+        -- Grabs a list of available directions in a zone
+        
+        log("A "..payload.my_type.."@"..address.." requested zone direction data")
+
+        local directions = get_zone_directions(payload.state)
+
+        Modem.transmit(address, GlobChannel, {
+          instruct="all_directions",
+          data = directions
+        })
+
       elseif payload.instruct == "active" then
         -- This returns a list of all active routes since the last reset.
 
@@ -511,7 +667,7 @@ while true do
           })
         end
       
-      elseif payload.instruct == "route" then
+      elseif payload.instruct == "route" or payload.instruct == "zone" then
         -- This means a client is executing a route.
 
         log("A "..payload.my_type.."@"..address.." is executing a route")
@@ -523,25 +679,25 @@ while true do
         -- 2. Call the ParseRoute on the file if it exists
         local this_route = payload.state
         if this_route ~= nil then
-          if fs.exists("routes/"..this_route) then
-            ParseRoute("routes/"..this_route)
+          if fs.exists(payload.instruct.."s/"..this_route) then
+            ParseRoute(payload.instruct.."s/"..this_route)
             Modem.transmit(address, GlobChannel, {
               instruct="success",
-              callback="route",
+              callback=payload.instruct,
               state=this_route
             })
-            log("Success, the route has been executed")
+            log("Success, the "..payload.instruct.." has been executed")
           else
             -- 3. Send a state to the client depending on success
             Modem.transmit(address, GlobChannel, {
               instruct="failed",
-              callback="route",
+              callback=payload.instruct
               state=this_route
             })
-            log("Failed, as the route does not exist")
+            log("Failed, as the "..payload.instruct.." does not exist")
           end
         else
-          log("Failed, as the route was corrupted or missing")
+          log("Failed, as the "..payload.instruct.." was corrupted or missing")
         end
         -- 4. Add the route name to the active routes table
         ActiveRoutes[#ActiveRoutes+1] = this_route
@@ -574,20 +730,44 @@ while true do
           })
           log("Success, the route has been added")
         end
+
+      elseif payload.instruct == "panic" then
+        -- Sets all signals to red
+
+        log("A "..payload.my_type.."@"..address.." initiated a panic")
+
+        ActiveRoutes = {}
+
+        set_all_states("signal", 1)
+        save_csv(Network.headers, Network.entries, "database.csv")
+
+      elseif payload.instruct == "override" then
+        -- Sets all signals to proceed with caution
+
+        log("A "..payload.my_type.."@"..address.." initiated an override")
+
+        ActiveRoutes = {}
+
+        set_all_states("signal", 7)
+        save_csv(Network.headers, Network.entries, "database.csv")
       
       elseif payload.instruct == "reset" then
         -- The client has reset to the default.
 
-        log("A "..payload.my_type.."@"..address.." requested a reset")
+        log("A "..payload.my_type.."@"..address.." initiated a reset")
 
         -- 1. Set all signals to red
         set_all_states("signal", 1)
+
         -- 2. Set all switches to off
         set_all_states("switch", 0)
+
         -- 3. Save state to disk
         save_csv(Network.headers, Network.entries, "database.csv")
+
         -- 4. Reset the ActiveRoutes table
         ActiveRoutes = {}
+
         -- 5. Process the route default.csv
         ParseRoute("routes/default.csv")
         Modem.transmit(address, GlobChannel, {
