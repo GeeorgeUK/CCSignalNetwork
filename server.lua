@@ -692,7 +692,7 @@ while true do
             -- 3. Send a state to the client depending on success
             Modem.transmit(address, GlobChannel, {
               instruct="failed",
-              callback=payload.instruct
+              callback=payload.instruct,
               state=this_route
             })
             log("Failed, as the "..payload.instruct.." does not exist")
