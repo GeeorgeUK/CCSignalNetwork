@@ -236,6 +236,7 @@ local function is_valid_zone(zone_path)
       -- Iterate in pairs over each file in the folder
       if first == nil or this == nil then
         return false, "mismatched count"
+      end
       if first ~= this then
         return false, "mismatched names"
       end
