@@ -276,7 +276,7 @@ function get_device(address)
     Searches through the Network entries for the address.
   ]]
   for index, item in ipairs(Network.entries) do
-    if item[2] == address then
+    if tonumber(item[2]) == tonumber(address) then
       return item
     end
   end
