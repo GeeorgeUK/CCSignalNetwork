@@ -98,7 +98,7 @@ end
 
 
 function SaveWithBackup(data, filename)
-  
+
   --[[
     Installs the update as a backup file.
     Just in case there's an error while installing.
@@ -369,6 +369,21 @@ function Command.reset.run(args)
     my_type="client"
   })
   log("Sending reset request")
+end
+
+Command.override = {}
+Command.override.usage = "override"
+Command.override.desc = "Allow proceeding with caution"
+Command.override.help = "Sets all signal machines to yellow, which allows trains to proceed if safe."
+function Command.override.run(args)
+  --[[
+    Function for the /override command.
+    Sets all signals to yellow.
+  ]]
+  Modem.transmit(GlobChannel, MyChannel, {
+    instruct="override",
+    my_type="client"
+  })
 end
 
 Command.active = {}
