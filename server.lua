@@ -379,7 +379,7 @@ Network = {}
 Network.headers, Network.entries = load_csv("database.csv")
 
 
-local function add_device(address, this_type, state)
+function add_device(address, this_type, state)
   --[[
     Adds the device to the database
   ]]
@@ -390,7 +390,7 @@ local function add_device(address, this_type, state)
 end
 
 
-local function get_device(address)
+function get_device(address)
   --[[
     Searches through the Network entries for the address.
   ]]
@@ -403,7 +403,7 @@ local function get_device(address)
 end
 
 
-local function set_device(address, new_type, new_state)
+function set_device(address, new_type, new_state)
   --[[
     Searches through the Network entries for the address, and updates it
   ]]
@@ -420,7 +420,7 @@ local function set_device(address, new_type, new_state)
 end
 
 
-local function set_all_states(of_type, new_state)
+function set_all_states(of_type, new_state)
   --[[
     Iterates through all Network entries of this type and sets them to the new state
     Will also send the state to the device in question.
@@ -434,7 +434,7 @@ local function set_all_states(of_type, new_state)
 end
 
 
-local function set_device_state(address, new_state)
+function set_device_state(address, new_state)
   --[[
     Searches through the Network entries for the address, and updates it
     Assumes that the device already exists
