@@ -549,7 +549,7 @@ while true do
           log("Info: "..their_type.."@"..address..": state is "..their_state.." as expected")
         else
           SendState(address, their_type, their_state)
-          log("Send: "..their_type.."@"..address..": state is "..their_state)
+          log("Send: "..their_type.."@"..address..": state is "..their_state.. ", was "..payload.state)
         end
 
       elseif payload.instruct == "update" then
