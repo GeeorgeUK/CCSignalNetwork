@@ -9,7 +9,7 @@ Modem = peripheral.find("modem")
 Modem.open(MyChannel)
 
 -- The global version identifier. If it does not match the server, we update
-Version = {1,0,22,1}
+Version = {1,0,22,2}
 
 -- A local log of messages
 Log = {}
@@ -47,7 +47,7 @@ local function show_log(here)
   here.clear()
 
   -- If we have a big logfile, we set an offset.
-  offset = #Log - ySize
+  local offset = #Log - ySize
 
   -- Iterate over each log file.
   for index, item in ipairs(Log) do
@@ -202,9 +202,10 @@ end
 
 Callbacks = {}
 Commands = {
-  "help", "route", "platforms", "zones", "zone", 
+  "help", "route", "platforms", "zones", "zone",
   "reset", "routes", "update", "active", "clear", 
-  "set", "get", "directions", "panic", "override"
+  "set", "get", "directions", "panic", "override",
+  "add"
 }
 table.sort(Commands)
 Command = {}
@@ -328,30 +329,103 @@ function Command.route.run(args)
   end
 end
 
-Command.addroute = {}
-Command.addroute.usage = "addroute <name> <path>"
-Command.addroute.desc = "Create a route."
-Command.addroute.help = "Create a new route CSV file, and send it to the server."
-function Command.addroute.run(args)
+Command.add = {}
+Command.add.usage = "add <type> <name>"
+Command.add.desc = "Download a route or zone."
+Command.add.help = "Downloads a route or zone from github, and sends it to the server."
+function Command.add.run(args)
   --[[
     Function for the /addroute command.
     This creates a route file, then sends it to the server.
   ]]
-  if #args < 2 then
+
+  -- Check for a valid number of arguments
+  if #args ~= 2 then
     log("Usage: "..Command.addroute.usage)
+    log("Valid typs: 'route', 'zone'")
   else
-    route_name = args[1]
-    shell.run("edit .temp_route.csv")
-    local route_file = fs.open(".temp_route.csv", "r")
-    local route_data = route_file.readAll()
-    Modem.transmit(GlobChannel, MyChannel, {
-      instruct="add_route",
-      name=route_name,
-      data=route_data,
-      my_type="client"
-    })
-    route_file.close()
-    log("Creating new route '"..route_name.."'")
+
+    if args[1] == "route" then
+      -- Downloading a route is simple, provided it exists
+      log("Attempting download of route")
+      local prefix = "https://raw.githubusercontent.com/GeeorgeUK/CCSignalNetwork/main/routes/"
+      local site = http.get(prefix..args[2])
+
+      if site then
+        -- Send the route data to the server
+        Modem.transmit(GlobChannel, MyChannel, {
+          instruct="addroute",
+          my_type="client",
+          state=args[2],
+          data=site.readAll()
+        })
+      else
+        log("Failed to download route")
+      end
+
+    elseif args[1] == "zone" then
+      -- Downloading a zone is less simple, so we have a zone register to help us!
+      log("Attempting download of zone")
+      local prefix = "https://raw.githubusercontent.com/GeeorgeUK/CCSignalNetwork/main/zones/"
+      
+      -- Grab the zone file, and require it so we get our ZoneRegistry table
+      local site = http.get("https://raw.githubusercontent.com/GeeorgeUK/CCSignalNetwork/main/zoneregistry.lua")
+      local downloadable_zones = site.readAll()
+      local zone_name = args[2]
+      local tmp_file = fs.open(".temp_zones", "w")
+      tmp_file.write(downloadable_zones)
+      tmp_file.close()
+      require(".temp_zones")
+      if not ZoneRegistry then
+        return log("Registry failed to initialise")
+      end
+
+      -- Check if it exists in the table
+      if ZoneRegistry[zone_name] == nil then
+        return log("No zone data exists for "..zone_name)
+      end
+
+      -- Check if the entry is enabled in the table
+      if not ZoneRegistry[zone_name].enabled then
+        return log("The zone "..zone_name.." is disabled")
+      end
+
+      local this_zone_data = ZoneRegistry[zone_name]
+      local presend_data = {}
+
+      -- Iterate through each platform and download the file
+      for _, platform in ipairs(this_zone_data.platforms) do
+
+        if #this_zone_data.directions > 0 then
+          
+          for _, direction in ipairs(this_zone_data.directions) do
+            local this_site = http.get(prefix.."/"..zone_name.."/"..direction.."/"..platform)
+            table.insert(presend_data, {
+              data=this_site.readAll(),
+              platform=platform,
+              direction=direction
+            })
+          end
+
+        else
+          local this_site = http.get(prefix.."/"..zone_name.."/"..platform)
+          table.insert(presend_data, {
+            data=this_site.readAll(),
+            direction=direction
+          })
+        end
+      end
+
+      Modem.transmit(GlobChannel, MyChannel, {
+        instruct="add_zone",
+        my_type="client",
+        name=zone_name
+      })
+
+      if fs.exists(".temp_zones") then fs.delete(".temp_zones") end
+    else
+      log("Valid first args: 'route', 'zone'")
+    end
   end
 end
 
@@ -519,18 +593,18 @@ while true do
   if event[1] == "modem_message" then
 
     -- This means it's a response
-    payload = event[5]
+    local payload = event[5]
 
     -- If it's a callback, then we check for that here. Callbacks contain a callback field.
     if payload.callback ~= nil then
       
-      this_check = {
+      local this_check = {
         "route", "add_route"
       }
-      other_check = {
+      local other_check = {
         "get", "set"
       }
-      final_check = {
+      local final_check = {
         "success", "failed"
       }
 
@@ -556,7 +630,7 @@ while true do
 
     if contains(this_check, payload.instruct) then
       log("Result ("..#payload.data.."):")
-      index = 1
+      local index = 1
       if not pocket then
         while true do
           if payload.data[index+2] == nil then

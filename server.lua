@@ -8,7 +8,7 @@ Modem.open(GlobChannel)
 -- The current network version.
 -- Sorted into {main, major, minor, build}
 -- Auto updaters will not attempt an update if the build changes.
-Version = {1,0,22,1}
+Version = {1,0,22,2}
 
 -- A log of messages.
 Log = {}
@@ -47,7 +47,7 @@ local function show_log(here)
   here.setCursorPos(1,1)
   
   -- If we have a big logfile, we set our offset.
-  offset = #Log - ySize
+  local offset = #Log - ySize
 
   -- Iterate over each log file.
   for index, item in ipairs(Log) do
@@ -232,7 +232,7 @@ local function is_valid_zone(zone_path)
         return false, "empty folders"
       end
     end
-    for first, this in pairs(table.sort(check_size), table.sort(fs.list(item))) do
+    for first, this in pairs( check_size, fs.list(item) ) do
       -- Iterate in pairs over each file in the folder
       if first == nil or this == nil then
         return false, "mismatched count"
@@ -379,7 +379,7 @@ Network = {}
 Network.headers, Network.entries = load_csv("database.csv")
 
 
-function add_device(address, this_type, state)
+local function add_device(address, this_type, state)
   --[[
     Adds the device to the database
   ]]
@@ -390,7 +390,7 @@ function add_device(address, this_type, state)
 end
 
 
-function get_device(address)
+local function get_device(address)
   --[[
     Searches through the Network entries for the address.
   ]]
@@ -403,7 +403,7 @@ function get_device(address)
 end
 
 
-function set_device(address, new_type, new_state)
+local function set_device(address, new_type, new_state)
   --[[
     Searches through the Network entries for the address, and updates it
   ]]
@@ -420,7 +420,7 @@ function set_device(address, new_type, new_state)
 end
 
 
-function set_all_states(of_type, new_state)
+local function set_all_states(of_type, new_state)
   --[[
     Iterates through all Network entries of this type and sets them to the new state
     Will also send the state to the device in question.
@@ -434,7 +434,7 @@ function set_all_states(of_type, new_state)
 end
 
 
-function set_device_state(address, new_state)
+local function set_device_state(address, new_state)
   --[[
     Searches through the Network entries for the address, and updates it
     Assumes that the device already exists
@@ -535,6 +535,10 @@ while true do
         local their_type = item[3]
         local their_state = item[4]
 
+        if their_type == "signal" and SignalBypass ~= nil then
+          their_state = SignalBypass
+        end
+
         -- 2. To save on bandwidth, only send the change if it's different
         -- (We should send if the version is different to trigger an update)
         if payload.state == their_state and (
@@ -564,7 +568,7 @@ while true do
         if contains(ValidUpdateTypes, payload.my_type) then
           -- 2. Send the new file they should install
           local new_file = fs.open(UpdateFileLocations[payload.my_type], "r")
-          content = new_file.readAll()
+          local content = new_file.readAll()
           Modem.transmit(address, GlobChannel, {
             instruct="update",
             your_type=payload.my_type,
@@ -708,8 +712,8 @@ while true do
         log("A "..payload.my_type.."@"..address.." is adding a new route")
 
         -- This means a client is creating a new route with the name.
-        route_name = payload.name
-        route_data = payload.data
+        local route_name = payload.name
+        local route_data = payload.data
         -- 1. Check the route name does not exist already
         if fs.exists("routes/"..route_name..".csv") then
           Modem.transmit(address, GlobChannel, {
@@ -732,26 +736,30 @@ while true do
           log("Success, the route has been added")
         end
 
-      elseif payload.instruct == "panic" then
-        -- Sets all signals to red
+      elseif contains({"anarchy","override","panic"}, payload.instruct) then
 
-        log("A "..payload.my_type.."@"..address.." initiated a panic")
-
-        ActiveRoutes = {}
-
-        set_all_states("signal", 1)
-        save_csv(Network.headers, Network.entries, "database.csv")
-
-      elseif payload.instruct == "override" then
-        -- Sets all signals to proceed with caution
-
-        log("A "..payload.my_type.."@"..address.." initiated an override")
+        log("A "..payload.my_type.."@"..address.." initiated "..payload.instruct)
 
         ActiveRoutes = {}
 
-        set_all_states("signal", 7)
+        local new_state = 0
+        if payload.instruct == "panic" then
+          new_state = 1
+        elseif payload.instruct == "override" then
+          new_state = 7
+        elseif payload.instruct == "anarchy" then
+          new_state = 15
+        end
+
+        set_all_states("signal", new_state)
+        SignalBypass = new_state
         save_csv(Network.headers, Network.entries, "database.csv")
-      
+
+        Modem.transmit(address, GlobChannel, {
+          instruct="success",
+          callback=payload.instruct
+        })
+
       elseif payload.instruct == "reset" then
         -- The client has reset to the default.
 
@@ -768,6 +776,9 @@ while true do
 
         -- 4. Reset the ActiveRoutes table
         ActiveRoutes = {}
+
+        -- 5. Remove any signal bypasses
+        SignalBypass = nil
 
         -- 5. Process the route default.csv
         ParseRoute("routes/default.csv")
