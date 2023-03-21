@@ -9,7 +9,7 @@ Modem = peripheral.find("modem")
 Modem.open(MyChannel)
 
 -- The global version identifier. If it does not match the server, we update
-Version = {1,0,22,2}
+Version = {1,0,22,3}
 
 -- A local log of messages
 Log = {}
@@ -397,7 +397,7 @@ function Command.add.run(args)
       for _, platform in ipairs(this_zone_data.platforms) do
 
         if #this_zone_data.directions > 0 then
-          
+
           for _, direction in ipairs(this_zone_data.directions) do
             local this_site = http.get(prefix.."/"..zone_name.."/"..direction.."/"..platform)
             table.insert(presend_data, {
