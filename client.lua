@@ -9,7 +9,7 @@ Modem = peripheral.find("modem")
 Modem.open(MyChannel)
 
 -- The global version identifier. If it does not match the server, we update
-Version = {1,0,22,3}
+Version = {1,1,0,0}
 
 -- A local log of messages
 Log = {}
