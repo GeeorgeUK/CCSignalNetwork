@@ -668,11 +668,11 @@ while true do
           instruct="pending"
         })
 
-        -- 2. Call ParseAuto on the file if it exists
+        -- 2. Call AutoParse on the file if it exists
         local this_route = payload.state
         if this_route ~= nil then
           if fs.exists(payload.instruct.."s/"..this_route) then
-            ParseAuto(payload.instruct.."s/"..this_route)
+            AutoParse(payload.instruct.."s/"..this_route)
             Modem.transmit(address, GlobChannel, {
               instruct="success",
               callback=payload.instruct,
