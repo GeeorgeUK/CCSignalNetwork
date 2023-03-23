@@ -360,7 +360,7 @@ function Command.override.run(args)
         my_type="client"
       })
     else
-      log("Valid`: "..table.concat(valid_args,", "))
+      log("Valid: "..table.concat(valid_args,", "))
     end
   else
     log("Usage: "..Command.override.usage)
