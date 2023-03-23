@@ -8,7 +8,7 @@ Modem.open(GlobChannel)
 -- The current network version.
 -- Sorted into {main, major, minor, build}
 -- Auto updaters will not attempt an update if the build changes.
-Version = {1,1,1,2}
+Version = {1,1,1,3}
 
 -- A log of messages.
 Log = {}
@@ -262,7 +262,7 @@ function ParseZone(zone, platform, direction)
   if contains(ZoneRegistry, zone) then
     if contains(ZoneRegistry[zone].platforms, platform) then
       if contains(ZoneRegistry[zone].directions, direction) then
-        ParseRoute(zone.."/"..direction.."/"..platform..".csv")
+        ParseRoute("zones/"..zone.."/"..direction.."/"..platform..".csv")
         return true
       end
     end
@@ -707,7 +707,7 @@ while true do
         -- 'platform' - the platform of the zone
         -- 'direction' - the direction of the zone
 
-        if ParseZone(payload.zone, payload.platform, payload.direction) then
+        if ParseZone(payload.zone, payload.platform, payload.direction) == true then
           Modem.transmit(address, GlobChannel, {
             instruct="success",
             callback="zone"
