@@ -467,7 +467,7 @@ function Command.set.run(args)
 end
 
 
-log(table.concat(Version, ".").." client@"..MyChannel)
+log(table.concat(Version, ".").." | client@"..MyChannel)
 while true do
   -- Update the log display and the input display
   show_log(LogDisplay)
