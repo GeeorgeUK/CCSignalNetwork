@@ -8,7 +8,7 @@ Modem.open(GlobChannel)
 -- The current network version.
 -- Sorted into {main, major, minor, build}
 -- Auto updaters will not attempt an update if the build changes.
-Version = {1,1,1,1}
+Version = {1,1,1,2}
 
 -- A log of messages.
 Log = {}
@@ -254,8 +254,8 @@ end
 
 function ParseZone(zone, platform, direction)
   if contains(ZoneRegistry, zone) then
-    if contains(platform, ZoneRegistry[zone].platforms) then
-      if contains(direction, ZoneRegistry[zone].directions) then
+    if contains(ZoneRegistry[zone].platforms, platform) then
+      if contains(ZoneRegistry[zone].directions, direction) then
         ParseRoute(zone.."/"..direction.."/"..platform..".csv")
         return true
       end
@@ -605,7 +605,7 @@ while true do
         end
 
         -- Grab information about the device
-        local device = GetDevice()
+        local device = GetDevice(payload.address)
         local success = "success"
         if device == nil then
           Modem.transmit(address, GlobChannel, {
@@ -619,10 +619,10 @@ while true do
               signal={1,7,15},
               switch={0,15}
             }
-            if device[3] == "signal" or device[3] == "state" then
+            if device[3] == "signal" or device[3] == "switch" then
               if contains(valid_states[device[3]], tonumber(payload.state)) then
-                SetDeviceState(address, payload.state)
-                device[4] = payload.state
+                SetDeviceState(payload.address, tonumber(payload.state))
+                device[4] = tonumber(payload.state)
                 save_csv(Network.headers, Network.entries, "database.csv")
                 success = "success"
               end
@@ -726,7 +726,9 @@ while true do
           log("Success, the route has been added")
         end
 
-      elseif payload.instruct == "override" then
+      elseif ( payload.instruct == "override" 
+            or payload.instruct == "anarchy" 
+            or payload.instruct == "panic" ) then
         if not payload.state then
           Modem.transmit(MyChannel, GlobChannel, {
             instruct="failed",

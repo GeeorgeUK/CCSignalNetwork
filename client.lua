@@ -9,7 +9,7 @@ Modem = peripheral.find("modem")
 Modem.open(MyChannel)
 
 -- The global version identifier. If it does not match the server, we update
-Version = {1,1,1,1}
+Version = {1,1,1,2}
 
 -- A local log of messages
 Log = {}
@@ -341,7 +341,7 @@ function Command.reset.run(args)
 end
 
 Command.override = {}
-Command.override.usage = "override"
+Command.override.usage = "override <signal>"
 Command.override.desc = "Override all signals"
 Command.override.help = "Sets all signal machines to any valid signal state."
 function Command.override.run(args)
@@ -380,7 +380,6 @@ function Command.list.run(args)
       instruct=args[1],
       my_type="client"
     })
-    log("Requesting active routes")
   else
     log("Usage: "..Command.list.usage)
   end

@@ -1,6 +1,7 @@
 ZoneRegistry = {}
 ZoneRegistry.all = {
-  "malachite", "lukredes", "shortlands"
+  "malachite", "lukredes", "shortlands",
+  "depot"
 }
 
 ZoneRegistry.malachite = {}
