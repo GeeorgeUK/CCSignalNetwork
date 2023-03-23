@@ -6,7 +6,7 @@ MyChannel = os.getComputerID() + 8192
 Modem = peripheral.find("modem")
 Modem.open(MyChannel)
 -- The current version of this switch.
-Version = {1,0,22}
+Version = {1,1,0,0}
 -- A log of messages
 Log = {}
 -- Default state of this machine (Off switch)
@@ -38,7 +38,7 @@ local function show_log(here)
   here.clear()
 
   -- If we have a big logfile, we set an offset.
-  offset = #Log - ySize
+  local offset = #Log - ySize
 
   -- Iterate over each log file.
   for index, item in ipairs(Log) do

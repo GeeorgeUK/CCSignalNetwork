@@ -35,7 +35,7 @@ local function show_log(here)
   here.clear()
 
   -- If we have a big logfile, we set an offset.
-  offset = #Log - ySize
+  local offset = #Log - ySize
 
   -- Iterate over each log file
   for index, item in ipairs(Log) do
