@@ -287,7 +287,7 @@ function ParseRoute(file)
     csv_data.headers, csv_data.entries = load_csv(file)
     for index, item in ipairs(csv_data.entries) do
       SaveState(item[2], item[3], item[4])
-      set_device(item[2], item[3], item[4])
+      SetDevice(item[2], item[3], item[4])
     end
     save_csv(Network.headers, Network.entries, "database.csv")
   else
@@ -326,7 +326,7 @@ Network = {}
 Network.headers, Network.entries = load_csv("database.csv")
 
 
-function add_device(address, this_type, state)
+function AddDevice(address, this_type, state)
   --[[
     Adds the device to the database
   ]]
@@ -337,7 +337,7 @@ function add_device(address, this_type, state)
 end
 
 
-function get_device(address)
+function GetDevice(address)
   --[[
     Searches through the Network entries for the address.
   ]]
@@ -350,7 +350,7 @@ function get_device(address)
 end
 
 
-function set_device(address, new_type, new_state)
+function SetDevice(address, new_type, new_state)
   --[[
     Searches through the Network entries for the address, and updates it
   ]]
@@ -362,12 +362,12 @@ function set_device(address, new_type, new_state)
     end
   end
   -- If we can't find the entry, create it
-  add_device(address, new_type, new_state)
+  AddDevice(address, new_type, new_state)
   return
 end
 
 
-function set_all_states(of_type, new_state)
+function SetAllState(of_type, new_state)
   --[[
     Iterates through all Network entries of this type and sets them to the new state
     Will also send the state to the device in question.
@@ -381,7 +381,7 @@ function set_all_states(of_type, new_state)
 end
 
 
-function set_device_state(address, new_state)
+function SetDeviceState(address, new_state)
   --[[
     Searches through the Network entries for the address, and updates it
     Assumes that the device already exists
@@ -431,7 +431,7 @@ function SaveState(address, their_type, their_state)
   ]]
   log("To "..their_type.."#"..address..": set is "..their_state)
   SendState(address, their_type, their_state)
-  set_device(address, their_type, their_state)
+  SetDevice(address, their_type, their_state)
 end
 
 
@@ -475,9 +475,9 @@ while true do
         -- This means a device is available, we should send their state.
 
         -- 1. Get the device details by its address
-        local item = get_device(address)
+        local item = GetDevice(address)
         if item == nil then
-          item = add_device(address, payload.my_type, payload.state)
+          item = AddDevice(address, payload.my_type, payload.state)
         end
         local their_type = item[3]
         local their_state = item[4]
@@ -597,7 +597,7 @@ while true do
         end
 
         -- Grab information about the device
-        local device = get_device()
+        local device = GetDevice()
         local success = "success"
         if device == nil then
           Modem.transmit(address, GlobChannel, {
@@ -613,7 +613,7 @@ while true do
             }
             if device[3] == "signal" or device[3] == "state" then
               if contains(valid_states[device[3]], tonumber(payload.state)) then
-                set_device_state(address, payload.state)
+                SetDeviceState(address, payload.state)
                 device[4] = payload.state
                 save_csv(Network.headers, Network.entries, "database.csv")
                 success = "success"
@@ -740,7 +740,7 @@ while true do
           new_state = 15
         end
 
-        set_all_states("signal", new_state)
+        SetAllState("signal", new_state)
         SignalBypass = new_state
         save_csv(Network.headers, Network.entries, "database.csv")
 
@@ -755,10 +755,10 @@ while true do
         log("A "..payload.my_type.."@"..address.." initiated a reset")
 
         -- 1. Set all signals to red
-        set_all_states("signal", 1)
+        SetAllState("signal", 1)
 
         -- 2. Set all switches to off
-        set_all_states("switch", 0)
+        SetAllState("switch", 0)
 
         -- 3. Save state to disk
         save_csv(Network.headers, Network.entries, "database.csv")
