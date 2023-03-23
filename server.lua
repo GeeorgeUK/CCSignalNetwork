@@ -260,13 +260,17 @@ end
 
 function ParseZone(zone, platform, direction)
   if contains(ZoneRegistry, zone) then
+    log("Debug: "..zone.." is valid")
     if contains(ZoneRegistry[zone].platforms, platform) then
+      log("Debug: "..platform.." is valid")
       if contains(ZoneRegistry[zone].directions, direction) then
+        log("Debug: "..zone.." is valid")
         ParseRoute("zones/"..zone.."/"..direction.."/"..platform..".csv")
         return true
       end
     end
   end
+  log("Failed to parse zone")
   return false
 end
 
