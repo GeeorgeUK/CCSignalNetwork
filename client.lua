@@ -367,7 +367,7 @@ Command.list = {}
 Command.list.usage = "list <type> <arguments...>"
 Command.list.desc = "List something."
 Command.list.help = "Can list zones, platforms, directions, routes, or active routes."
-function Command.active.run(args)
+function Command.list.run(args)
 
   --[[
     Function for the /active command.
