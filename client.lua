@@ -350,14 +350,18 @@ function Command.override.run(args)
     Sets all signals to whatever was requested.
   ]]
 
-  local valid_args = {"red", "yellow", "green", "off"}
+  local valid_args = {"red", "yellow", "green"}
 
   if #args == 1 then
-    Modem.transmit(GlobChannel, MyChannel, {
-      instruct="override",
-      state=args[1],
-      my_type="client"
-    })
+    if contains(valid_args, args[1]) then
+      Modem.transmit(GlobChannel, MyChannel, {
+        instruct="override",
+        state=args[1],
+        my_type="client"
+      })
+    else
+      log("Valid`: "..table.concat(valid_args,", "))
+    end
   else
     log("Usage: "..Command.override.usage)
   end
