@@ -271,6 +271,22 @@ function ParseZone(zone, platform, direction)
 end
 
 
+function AutoParse(genericfile)
+  --[[
+    Automatically parses the route, depending on if it's a .rs type or a .csv
+  ]]
+
+  if string.sub(genericfile, #genericfile-2) == ".rs" then
+    -- Parse as a routeset file
+    ParseRouteSet(genericfile)
+  else
+    -- Parse as a CSV
+    ParseRoute(genericfile)
+  end
+
+end
+
+
 function ParseRouteSet(routesetfile)
   --[[
     A routeset file is a list of paths to routes.
@@ -652,11 +668,11 @@ while true do
           instruct="pending"
         })
 
-        -- 2. Call the ParseRoute on the file if it exists
+        -- 2. Call ParseAuto on the file if it exists
         local this_route = payload.state
         if this_route ~= nil then
           if fs.exists(payload.instruct.."s/"..this_route) then
-            ParseRoute(payload.instruct.."s/"..this_route)
+            ParseAuto(payload.instruct.."s/"..this_route)
             Modem.transmit(address, GlobChannel, {
               instruct="success",
               callback=payload.instruct,
