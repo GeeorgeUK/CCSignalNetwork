@@ -8,7 +8,7 @@ Modem.open(GlobChannel)
 -- The current network version.
 -- Sorted into {main, major, minor, build}
 -- Auto updaters will not attempt an update if the build changes.
-Version = {1,1,0,0}
+Version = {1,1,1,0}
 
 -- A log of messages.
 Log = {}
@@ -18,6 +18,9 @@ Network = {}
 
 -- Our route history
 ActiveRoutes = {}
+
+-- Our ZoneRegistry data
+ZoneRegistry = require("zoneregistry")
 
 
 local function log(message)
@@ -200,86 +203,17 @@ local function is_valid(headers, line)
 end
 
 
-local function is_valid_zone(zone_path)
-
-  --[[
-    A function that checks if a zone is valid.
-  ]]
-
-  -- Is this path a directory that exists?
-  if not fs.isDir(zone_path) then
-    return false, "does not exist"
-  end
-
-  -- We need at least 2 directions...
-  -- ... or at least two platforms
-  local paths_in_zone = fs.list(zone_path)
-  if #paths_in_zone < 2 then
-    return false, "not enough options"
-  end
-
-  -- If folders, then each folder must have the same number of platforms
-  local check_size = nil
-  for index, item in ipairs(paths_in_zone) do
-    if index == 1 then
-      if not fs.isDir() then
-        return true, "non-directional"
-      end
-      check_size = fs.list(item)
-      -- We allow single platform options if we are multidirectional, 
-      -- so cancel if at least one.
-      if #check_size < 1 then
-        return false, "empty folders"
-      end
-    end
-    for first, this in pairs( check_size, fs.list(item) ) do
-      -- Iterate in pairs over each file in the folder
-      if first == nil or this == nil then
-        return false, "mismatched count"
-      end
-      if first ~= this then
-        return false, "mismatched names"
-      end
-    end
-  end
-    -- Checks complete
-  return true, "multi-directional"
-end
-
-
 local function get_valid_zones()
-  -- Returns a filtered list of valid zones
-  local result = {}
-  for _, item in ipairs(fs.list("zones")) do
-    if is_valid_zone(item) then
-      table.insert(result, item)
-    end
-  end
-  return result
+  return ZoneRegistry.all or {}
 end
 
 
 local function get_zone_directions(zone)
-  local result = {}
-  if not fs.isDir("zones/"..zone) then return {} end
-  for _, item in ipairs(fs.list("zones/"..zone)) do
-    if fs.isDir(item) then
-      -- Means it's a direction, and not a platform
-      return fs.list("zones/"..zone)
-    end
-    return {}
-  end
+  return ZoneRegistry[zone].directions
 end
 
 local function get_zone_platforms(zone)
-  if not fs.isDir("zones/"..zone) then return {} end
-  for _, item in ipairs(fs.list("zones/"..zone)) do
-    if fs.isDir(item) then
-      -- Means it's a direction and not a platform
-      return fs.list("zones/"..zone.."/"..item)
-    end
-    return fs.list("zones/"..zone) 
-  end
+  return ZoneRegistry[zone].platforms
 end
 
 
@@ -307,6 +241,19 @@ local function is_routeset_file(routesetfile)
     Simply finds the suffix ".rs"
   ]]
   return string.sub(routesetfile, #routesetfile-2, #routesetfile) == ".rs"
+end
+
+
+function ParseZone(zone, platform, direction)
+  if contains(ZoneRegistry, zone) then
+    if contains(platform, ZoneRegistry[zone].platforms) then
+      if contains(direction, ZoneRegistry[zone].directions) then
+        ParseRoute(zone.."/"..direction.."/"..platform..".csv")
+        return true
+      end
+    end
+  end
+  return false
 end
 
 
@@ -491,7 +438,7 @@ end
 -- Runtime environment
 term.clear()
 term.setCursorPos(1,1)
-log("Started Skyline "..table.concat(Version, ".").." server on port "..GlobChannel)
+log(table.concat(Version, ".").." | server@"..GlobChannel)
 Monitor = peripheral.find("monitor")
 if Monitor ~= nil then
   Monitor.clear()
@@ -560,9 +507,9 @@ while true do
           signal="/updates/signal.lua",
           schedule="/updates/schedule.lua",
           sensor="/updates/sensor.lua",
-          client="/updates/client.lua"
+          client="/updates/client.lua",
         }
-        log("A "..payload.my_type.."@"..address.." requested an update")
+        log(payload.my_type.."@"..address.." requested an update")
 
         -- 1. What type did they say they were?
         if contains(ValidUpdateTypes, payload.my_type) then
@@ -651,36 +598,46 @@ while true do
 
         -- Grab information about the device
         local device = get_device()
+        local success = "success"
         if device == nil then
           Modem.transmit(address, GlobChannel, {
-            callback="get",
+            callback=payload.instruct,
             state="failed"
           })
         else
           if payload.instruct == "set" then
-            -- Here we make the changes as necessary
-            -- Then we redefine device with the new data
-            set_device_state(address, payload.state)
-            device[4] = payload.state
-            save_csv(Network.headers, Network.entries, "database.csv")
+            -- Here we change the state as required.
+            local valid_states = {
+              signal={1,7,15},
+              switch={0,15}
+            }
+            if device[3] == "signal" or device[3] == "state" then
+              if contains(valid_states[device[3]], tonumber(payload.state)) then
+                set_device_state(address, payload.state)
+                device[4] = payload.state
+                save_csv(Network.headers, Network.entries, "database.csv")
+                success = "success"
+              end
+            end
           end
           -- Send the information to the client
           Modem.transmit(address, GlobChannel, {
-            callback="get",
-            state="success",
-            data=device
+            callback=payload.instruct,
+            state=success,
+            data=device or nil
           })
         end
       
-      elseif payload.instruct == "route" or payload.instruct == "zone" then
+      elseif payload.instruct == "route" then
         -- This means a client is executing a route.
 
-        log("A "..payload.my_type.."@"..address.." is executing a route")
+        log("A "..payload.my_type.."@"..address.." is executing a "..payload.instruct)
 
         -- 1. Send a pending state to the client
         Modem.transmit(address, GlobChannel, {
           instruct="pending"
         })
+
         -- 2. Call the ParseRoute on the file if it exists
         local this_route = payload.state
         if this_route ~= nil then
@@ -706,6 +663,31 @@ while true do
         end
         -- 4. Add the route name to the active routes table
         ActiveRoutes[#ActiveRoutes+1] = this_route
+      
+      elseif payload.instruct == "zone" then
+        -- This means a client is executing a zone.
+
+        -- 1. Send a pending state to the client
+        Modem.transmit(address, GlobChannel, {
+          instruct = "pending"
+        })
+
+        -- We need the following fields from the client:
+        -- 'zone' - the zone we want to change
+        -- 'platform' - the platform of the zone
+        -- 'direction' - the direction of the zone
+
+        if ParseZone(payload.zone, payload.platform, payload.direction) then
+          Modem.transmit(address, GlobChannel, {
+            instruct="success",
+            callback="zone"
+          })
+        else
+          Modem.transmit(address, GlobChannel, {
+            instruct="failed",
+            callback="zone"
+          })
+        end
      
       elseif payload.instruct == "add_route" then
 
@@ -736,9 +718,16 @@ while true do
           log("Success, the route has been added")
         end
 
-      elseif contains({"anarchy","override","panic"}, payload.instruct) then
+      elseif payload.instruct == "override" then
+        if not payload.state then
+          Modem.transmit(MyChannel, GlobChannel, {
+            instruct="failed",
+            callback="override",
+            reason="Missing state field from argument"
+          })
+        end
 
-        log("A "..payload.my_type.."@"..address.." initiated "..payload.instruct)
+        log("A "..payload.my_type.."@"..address.." initiated "..payload.instruct.." to "..payload.state)
 
         ActiveRoutes = {}
 

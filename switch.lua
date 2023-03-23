@@ -6,7 +6,7 @@ MyChannel = os.getComputerID() + 8192
 Modem = peripheral.find("modem")
 Modem.open(MyChannel)
 -- The current version of this switch.
-Version = {1,1,0,0}
+Version = {1,1,1,0}
 -- A log of messages
 Log = {}
 -- Default state of this machine (Off switch)
@@ -186,7 +186,7 @@ ApplyState()
 PingState()
 
 
-log("Started Skyline "..table.concat(Version, ".").." switch on channel "..MyChannel)
+log(table.concat(Version, ".").." | switch@"..MyChannel)
 while true do
 
   -- Display the log
@@ -200,7 +200,7 @@ while true do
     if type(event[5]) == "table" then
 
       -- Our payload
-      payload = event[5]
+      local payload = event[5]
 
       if payload.instruct == "update" then
         if payload.your_type == "switch" then

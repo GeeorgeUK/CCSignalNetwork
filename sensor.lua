@@ -6,7 +6,7 @@ MyChannel = os.getComputerID() + 8192
 Modem = peripheral.find("modem")
 Modem.open(MyChannel)
 -- The current version of this sensor.
-Version = {1,1,0,0}
+Version = {1,1,1,0}
 -- A log of messages
 Log = {}
 
@@ -108,7 +108,7 @@ function SaveWithBackup(data, filename)
 end
 
 
-log("Started Skyline "..table.concat(Version, ".").." sensor on channel "..MyChannel)
+log(table.concat(Version, ".").." | sensor@"..MyChannel)
 while true do
 
   -- Display the log
@@ -122,7 +122,7 @@ while true do
     if type(event[5]) == "table" then
 
       -- Our payload
-      payload = event[5]
+      local payload = event[5]
 
       if payload.instruct == "update" then
         if payload.your_type == "sensor" then
@@ -130,6 +130,14 @@ while true do
           SaveWithBackup(payload.data, "startup.lua")
           shell.run("startup.lua")
           return
+        end
+      elseif payload.instruct == "ping" then
+        if payload.your_type == "sensor" then
+          -- Send our current state
+          Modem.transmit(GlobChannel, MyChannel, {
+            state=rs.getInput("top"),
+            my_type="sensor"
+          })
         end
       end
     

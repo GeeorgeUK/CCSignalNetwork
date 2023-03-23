@@ -206,3 +206,7 @@ ZoneRegistry.depot.platform["5"] = {
     canReach = {"3.1.2"}
   }
 }
+
+-- Add additional stations here. Dont forget to add the station to canReach!
+
+return ZoneRegistry

@@ -9,7 +9,7 @@ Modem = peripheral.find("modem")
 Modem.open(MyChannel)
 
 -- The global version identifier. If it does not match the server, we update
-Version = {1,1,0,0}
+Version = {1,1,0,1}
 
 -- A local log of messages
 Log = {}
@@ -202,10 +202,10 @@ end
 
 Callbacks = {}
 Commands = {
-  "help", "route", "platforms", "zones", "zone",
-  "reset", "routes", "update", "active", "clear", 
-  "set", "get", "directions", "panic", "override",
-  "add"
+  "help", "route", "list",
+  "reset","update", "clear",
+  "set", "get", "override",
+  "add", "zone"
 }
 table.sort(Commands)
 Command = {}
@@ -215,28 +215,33 @@ Command.help.usage = "help [topic?]"
 Command.help.desc = "Show commands."
 Command.help.help = "Use this command to learn how to use commands."
 function Command.help.run(args)
+
   --[[
     Function for the /help command.
     This displays a list of available commands.
   ]]
+
   if #args == 0 or args == nil then
     log("There are #"..#Commands.." commands:")
     for index, command in ipairs(Commands) do
-      log(Command[command].usage..": "..Command[command].desc)
+      log("'"..Command[command].usage.."' - "..Command[command].desc)
     end
+
   else
     if contains(Commands, args[1]) then
       log("Showing help for "..args[1]..":")
       log("Usage: "..Command[args[1]].usage)
       log(Command[args[1]].help)
+
     else
       log("Unknown command: '"..args[1].."'")
+
     end
   end
 end
 
 Command.zone = {}
-Command.zone.usage = "zone <zone> [?direction] <platform>"
+Command.zone.usage = "zone <zone> <platform> <direction>"
 Command.zone.desc = "Set the path of a zone"
 Command.zone.help = "Configures a zone to have a specific configuration."
 function Command.zone.run(args)
@@ -244,11 +249,13 @@ function Command.zone.run(args)
     Function for the /zone command.
     This executes a routefile on the server, contained in the zones folder.
   ]]
-  if #args == 2 or #args == 3 then
+  if #args == 3 then
     -- Don't check this zone for a direction
     Modem.transmit(GlobChannel, MyChannel, {
       instruct="zone",
-      state=table.concat(args, "/")..".csv",
+      zone=args[1],
+      platform=args[2],
+      direction=args[3],
       my_type="client"
     })
   else
@@ -256,57 +263,6 @@ function Command.zone.run(args)
   end
 end
 
-Command.zones = {}
-Command.zones.usage = "zones"
-Command.zones.desc = "Get a list of zones"
-Command.zones.help = "Returns a list of every available zone space"
-function Command.zones.run(args)
-  Modem.transmit(GlobChannel, MyChannel, {
-    instruct="zones",
-    my_type="client"
-  })
-end
-
-Command.directions = {}
-Command.directions.usage = "directions <zone>"
-Command.directions.desc = "Get a zone's directions"
-Command.directions.help = "Returns a list of directions available in a zone"
-function Command.directions.run(args)
-  --[[
-    Function for the /directions command.
-    This retrieves a list of available directions for a particular zone.
-  ]]
-  if #args == 1 then
-    Modem.transmit(GlobChannel, MyChannel, {
-      instruct="directions",
-      state=args[1],
-      my_type="client"
-    })
-  else
-    log("Usage: "..Command.directions.usage)
-  end
-end
-
-Command.platforms = {}
-Command.platforms.usage = "platforms <zone>"
-Command.platforms.desc = "Get a list of platforms in a zone"
-Command.platforms.help = "Returns a list of platforms available in a zone"
-function Command.platforms.run(args)
-  --[[
-    Function for the /platforms command.
-    This retrieves a list of available platforms for a particular zone.
-  ]]
-
-  if #args == 1 then
-    Modem.transmit(GlobChannel, MyChannel, {
-      instruct="platforms",
-      state=args[1],
-      my_type="client"
-    })
-  else
-    log("Usage: "..Command.platforms.usage)
-  end
-end
 
 Command.route = {}
 Command.route.usage = "route <routeName>"
@@ -335,7 +291,7 @@ Command.add.desc = "Download a route or zone."
 Command.add.help = "Downloads a route or zone from github, and sends it to the server."
 function Command.add.run(args)
   --[[
-    Function for the /addroute command.
+    Function for the /add command.
     This creates a route file, then sends it to the server.
   ]]
 
@@ -362,69 +318,8 @@ function Command.add.run(args)
       else
         log("Failed to download route")
       end
-
-    elseif args[1] == "zone" then
-      -- Downloading a zone is less simple, so we have a zone register to help us!
-      log("Attempting download of zone")
-      local prefix = "https://raw.githubusercontent.com/GeeorgeUK/CCSignalNetwork/main/zones/"
-      
-      -- Grab the zone file, and require it so we get our ZoneRegistry table
-      local site = http.get("https://raw.githubusercontent.com/GeeorgeUK/CCSignalNetwork/main/zoneregistry.lua")
-      local downloadable_zones = site.readAll()
-      local zone_name = args[2]
-      local tmp_file = fs.open(".temp_zones", "w")
-      tmp_file.write(downloadable_zones)
-      tmp_file.close()
-      require(".temp_zones")
-      if not ZoneRegistry then
-        return log("Registry failed to initialise")
-      end
-
-      -- Check if it exists in the table
-      if ZoneRegistry[zone_name] == nil then
-        return log("No zone data exists for "..zone_name)
-      end
-
-      -- Check if the entry is enabled in the table
-      if not ZoneRegistry[zone_name].enabled then
-        return log("The zone "..zone_name.." is disabled")
-      end
-
-      local this_zone_data = ZoneRegistry[zone_name]
-      local presend_data = {}
-
-      -- Iterate through each platform and download the file
-      for _, platform in ipairs(this_zone_data.platforms) do
-
-        if #this_zone_data.directions > 0 then
-
-          for _, direction in ipairs(this_zone_data.directions) do
-            local this_site = http.get(prefix.."/"..zone_name.."/"..direction.."/"..platform)
-            table.insert(presend_data, {
-              data=this_site.readAll(),
-              platform=platform,
-              direction=direction
-            })
-          end
-
-        else
-          local this_site = http.get(prefix.."/"..zone_name.."/"..platform)
-          table.insert(presend_data, {
-            data=this_site.readAll(),
-            direction=direction
-          })
-        end
-      end
-
-      Modem.transmit(GlobChannel, MyChannel, {
-        instruct="add_zone",
-        my_type="client",
-        name=zone_name
-      })
-
-      if fs.exists(".temp_zones") then fs.delete(".temp_zones") end
     else
-      log("Valid first args: 'route', 'zone'")
+      log("Valid first args: 'route'")
     end
   end
 end
@@ -447,65 +342,69 @@ end
 
 Command.override = {}
 Command.override.usage = "override"
-Command.override.desc = "Allow proceeding with caution"
-Command.override.help = "Sets all signal machines to yellow, which allows trains to proceed if safe."
+Command.override.desc = "Override all signals"
+Command.override.help = "Sets all signal machines to any valid signal state."
 function Command.override.run(args)
   --[[
     Function for the /override command.
-    Sets all signals to yellow.
+    Sets all signals to whatever was requested.
   ]]
-  Modem.transmit(GlobChannel, MyChannel, {
-    instruct="override",
-    my_type="client"
-  })
+
+  local valid_args = {"red", "yellow", "green", "off"}
+
+  if #args == 1 then
+    Modem.transmit(GlobChannel, MyChannel, {
+      instruct="override",
+      state=args[1],
+      my_type="client"
+    })
+  else
+    log("Usage: "..Command.override.usage)
+  end
 end
 
-Command.active = {}
-Command.active.usage = "active"
-Command.active.desc = "List active routes."
-Command.active.help = "Gets a list of all activated routes since the last reset"
+Command.list = {}
+Command.list.usage = "list <type> <arguments...>"
+Command.list.desc = "List something."
+Command.list.help = "Can list zones, platforms, directions, routes, or active routes."
 function Command.active.run(args)
+
   --[[
     Function for the /active command.
     Grabs a list of activated routes since the last reset.
   ]]
-  Modem.transmit(GlobChannel, MyChannel, {
-    instruct="active",
-    my_type="client"
-  })
-  log("Requesting active routes")
+
+  local valid_args = {"zones", "platforms", "directions", "routes", "active"}
+  if contains(valid_args, args[1]) then
+    Modem.transmit(GlobChannel, MyChannel, {
+      instruct=args[1],
+      my_type="client"
+    })
+    log("Requesting active routes")
+  else
+    log("Usage: "..Command.list.usage)
+  end
+
 end
 
-Command.routes = {}
-Command.routes.usage = "routes"
-Command.routes.desc = "List all routes."
-Command.routes.help = "Gets a list of all available routes to the server"
-function Command.routes.run(args)
-  --[[
-    Function for the /routes command.
-    Grabs a list of all routes available to the server.
-  ]]
-  Modem.transmit(GlobChannel, MyChannel, {
-    instruct="routes",
-    my_type="client"
-  })
-  log("Requesting all routes")
-end
 
 Command.update = {}
 Command.update.usage = "update"
 Command.update.desc = "Updates the client."
 Command.update.help = "Updates your client to the latest version"
 function Command.update.run(args)
+
   --[[
     Function for the /update command.
     Grabs the client update file from the server and updates.
   ]]
+
   Modem.transmit(GlobChannel, MyChannel, {
     instruct="update",
     my_type="client"
   })
   log("Requesting client update")
+
 end
 
 Command.clear = {}
@@ -517,9 +416,11 @@ function Command.clear.run(args)
     Function for the /clear command.
     Creates a new log global variable.
   ]]
+
   while #Log > 0 do
     table.remove(Log, 1)
   end
+
 end
 
 Command.get = {}
@@ -537,8 +438,8 @@ function Command.get.run(args)
     log("Fetching machine details")
     Modem.transmit(GlobChannel, MyChannel, {
       instruct="get",
-      my_type="client",
-      address=tonumber(args[1])
+      address=tonumber(args[1]),
+      my_type="client"
     })
   end
 end
@@ -553,35 +454,20 @@ function Command.set.run(args)
     Changes the state of a particular machine.
   ]]
   if #args ~= 2 then
-    log("Usage: "..Command.get.usage)
+    log("Usage: "..Command.set.usage)
   else
     log("Sending state change request")
     Modem.transmit(GlobChannel, MyChannel, {
       instruct="set",
-      my_type="client",
       address=tonumber(args[1]),
-      state=args[2]
+      state=args[2],
+      my_type="client"
     })
   end
 end
 
-Command.panic = {}
-Command.panic.usage = "panic"
-Command.panic.desc = "Turns all signals to red"
-Command.panic.help = "Turns all signals to red when they become available."
-function Command.panic.run(args)
-  --[[
-    Function for the /panic command.
-    Turns all signals to red to encourage players to stop their trains.
-  ]]
-  Modem.transmit(GlobChannel, MyChannel, {
-    instruct="panic",
-    my_type="client"
-  })
-end
 
-
-log("Started Skyline "..table.concat(Version, ".").." client on channel "..MyChannel)
+log(table.concat(Version, ".").." client@"..MyChannel)
 while true do
   -- Update the log display and the input display
   show_log(LogDisplay)
