@@ -8,7 +8,7 @@ Modem.open(GlobChannel)
 -- The current network version.
 -- Sorted into {main, major, minor, build}
 -- Auto updaters will not attempt an update if the build changes.
-Version = {1,1,1,0}
+Version = {1,1,1,1}
 
 -- A log of messages.
 Log = {}
