@@ -297,8 +297,8 @@ function Command.add.run(args)
 
   -- Check for a valid number of arguments
   if #args ~= 2 then
-    log("Usage: "..Command.addroute.usage)
-    log("Valid typs: 'route', 'zone'")
+    log("Usage: "..Command.add.usage)
+    log("Valid types: 'route'")
   else
 
     if args[1] == "route" then
@@ -310,9 +310,9 @@ function Command.add.run(args)
       if site then
         -- Send the route data to the server
         Modem.transmit(GlobChannel, MyChannel, {
-          instruct="addroute",
+          instruct="add_route",
           my_type="client",
-          state=args[2],
+          name=args[2],
           data=site.readAll()
         })
       else

@@ -140,6 +140,12 @@ local function load_csv(file)
   -- Handle the file.
   local handler = fs.open(file, "r")
 
+  -- If the handler is nil, then the file is missing.
+  if handler == nil then
+    log("Missing file: "..file)
+    return {}, {}
+  end
+
   -- First, we must deal with the headers.
   local headers_line = handler.readLine()
   -- If the file is empty, we should return empty headers and entries.
@@ -714,7 +720,7 @@ while true do
           log("Failed, the route already exists.")
         else
           -- 2. Save the route file if we can
-          local route_file = fs.open("routes/"..route_name..".csv", "w")
+          local route_file = fs.open("routes/"..route_name, "w")
           route_file.write(route_data)
           route_file.close()
           -- 3. Send a state to the client depending on success
