@@ -209,11 +209,19 @@ end
 
 
 local function get_zone_directions(zone)
-  return ZoneRegistry[zone].directions
+  if ZoneRegistry[zone] then
+    return ZoneRegistry[zone].directions
+  else
+    return {}
+  end
 end
 
 local function get_zone_platforms(zone)
-  return ZoneRegistry[zone].platforms
+  if ZoneRegistry[zone] then
+    return ZoneRegistry[zone].platforms
+  else
+    return {}
+  end
 end
 
 
