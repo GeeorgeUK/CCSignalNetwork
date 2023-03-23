@@ -378,6 +378,7 @@ function Command.list.run(args)
   if contains(valid_args, args[1]) then
     Modem.transmit(GlobChannel, MyChannel, {
       instruct=args[1],
+      state=args[2],
       my_type="client"
     })
   else
